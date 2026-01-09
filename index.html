@@ -1,315 +1,438 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>NEON REBEL // SYSTEM_v1.0</title>
-    <style>
-        :root {
-            --neon-blue: #00f2ff;
-            --neon-pink: #ff0055;
-            --bg-dark: #050508;
-            --panel: rgba(20, 20, 25, 0.95);
-        }
+  <meta charset="UTF-8" />
+  <title>suck the long dicks</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
 
-        body, html {
-            margin: 0; padding: 0;
-            background: var(--bg-dark);
-            color: white;
-            font-family: 'Courier New', monospace;
-            overflow: hidden;
-            height: 100%;
-        }
+    body {
+      background: #0f172a;
+      color: #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100vh;
+      padding-top: 20px;
+    }
 
-        canvas { display: block; cursor: crosshair; }
+    h1 {
+      margin-bottom: 8px;
+      font-size: 28px;
+      color: #f97316;
+      text-shadow: 0 0 8px rgba(0,0,0,0.6);
+    }
 
-        /* --- UI OVERLAY --- */
-        #hud {
-            position: absolute; top: 20px; left: 20px;
-            pointer-events: none;
-            text-transform: uppercase;
-        }
+    #subtitle {
+      margin-bottom: 16px;
+      color: #9ca3af;
+      font-size: 14px;
+    }
 
-        .stat-box {
-            background: var(--panel);
-            border-left: 4px solid var(--neon-blue);
-            padding: 10px 20px;
-            margin-bottom: 10px;
-            box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
-        }
+    #game-container {
+      position: relative;
+      border: 3px solid #1f2937;
+      background: radial-gradient(circle at top, #1e293b, #020617);
+      width: 640px;
+      height: 400px;
+      overflow: hidden;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
 
-        #boot-screen {
-            position: absolute; inset: 0;
-            background: black;
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            z-index: 9999;
-        }
+    #hud {
+      margin-top: 12px;
+      display: flex;
+      gap: 16px;
+      font-size: 14px;
+    }
 
-        .terminal-text { color: var(--neon-blue); margin: 5px; }
+    .label {
+      color: #9ca3af;
+    }
 
-        /* --- CRT SHADER EFFECT --- */
-        .crt::before {
-            content: " ";
-            display: block; position: absolute;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 2;
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
-        }
+    .value {
+      color: #facc15;
+      font-weight: 600;
+    }
 
-        .btn {
-            background: none; border: 2px solid var(--neon-pink);
-            color: var(--neon-pink); padding: 15px 30px;
-            cursor: pointer; font-weight: bold;
-            transition: 0.3s;
-        }
+    #controls {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #9ca3af;
+      text-align: center;
+    }
 
-        .btn:hover { background: var(--neon-pink); color: white; box-shadow: 0 0 20px var(--neon-pink); }
-    </style>
+    #start-btn {
+      margin-top: 10px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid #f97316;
+      background: #111827;
+      color: #f97316;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+    }
+
+    #start-btn:hover {
+      background: #f97316;
+      color: #111827;
+      box-shadow: 0 0 10px rgba(249,115,22,0.7);
+    }
+
+    #start-btn:active {
+      transform: scale(0.96);
+    }
+
+    #game-over {
+      position: absolute;
+      inset: 0;
+      background: rgba(15,23,42,0.92);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #e5e7eb;
+      font-size: 20px;
+      text-align: center;
+      display: none;
+    }
+
+    #game-over h2 {
+      margin-bottom: 8px;
+      font-size: 26px;
+      color: #f97316;
+    }
+
+    #game-over p {
+      margin-bottom: 4px;
+      font-size: 14px;
+      color: #e5e7eb;
+    }
+
+    #game-over span {
+      color: #facc15;
+      font-weight: 600;
+    }
+
+    /* Mouth */
+    .mouth {
+      position: absolute;
+      bottom: 20px;
+      width: 70px;
+      height: 35px;
+      border-radius: 40px 40px 60px 60px;
+      background: linear-gradient(to bottom, #f97316, #b45309);
+      box-shadow: 0 0 14px rgba(248, 113, 22, 0.8);
+      border: 2px solid #78350f;
+      overflow: hidden;
+    }
+
+    .mouth-inner {
+      position: absolute;
+      inset: 5px 6px 3px 6px;
+      background: radial-gradient(circle at 50% 0, #fecaca, #7f1d1d);
+      border-radius: 40px 40px 60px 60px;
+    }
+
+    /* Stick */
+    .stick {
+      position: absolute;
+      width: 10px;
+      height: 160px; /* long sticks */
+      background: linear-gradient(to bottom, #fbbf24, #b45309);
+      border-radius: 999px;
+      box-shadow:
+        0 0 6px rgba(251,191,36,0.7),
+        0 0 14px rgba(251,191,36,0.35);
+      border: 2px solid rgba(120,53,15,0.6);
+    }
+
+    /* Simple “ground” line */
+    #ground-line {
+      position: absolute;
+      bottom: 18px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(to right, transparent, #4b5563, transparent);
+      opacity: 0.6;
+    }
+  </style>
 </head>
-<body class="crt">
+<body>
+  <h1>Eat The Long Sticks</h1>
+  <div id="subtitle">Move the mouth and suck dicks as a prostitute before they underpay you and run away.</div>
 
-    <div id="boot-screen">
-        <h1 class="terminal-text">> LOADING_SYSTEM...</h1>
-        <p class="terminal-text">> INITIALIZING_NEON_CORE...</p>
-        <p class="terminal-text">> BYPASSING_FIREWALL...</p>
-        <br>
-        <button class="btn" onclick="Engine.start()">[ EXECUTE_GAME ]</button>
+  <div id="game-container">
+    <div id="ground-line"></div>
+    <div id="mouth" class="mouth">
+      <div class="mouth-inner"></div>
     </div>
-
-    <div id="hud">
-        <div class="stat-box">CORE_STABILITY: <span id="hp">100</span>%</div>
-        <div class="stat-box">FRAG_COUNT: <span id="score">0</span></div>
-        <div class="stat-box">SYSTEM_LOAD: <span id="load">1.0</span>x</div>
+    <div id="game-over">
+      <h2>prostitute life over</h2>
+      <p>You didnt suck enough dicks...</p>
+      <p>Your score: <span id="final-score">0</span></p>
+      <p>Best score: <span id="best-score">0</span></p>
+      <button id="restart-btn">suck dicks again</button>
     </div>
+  </div>
 
-    <canvas id="stage"></canvas>
+  <div id="hud">
+    <div><span class="label">dicks sucked:</span> <span class="value" id="score">0</span></div>
+    <div><span class="label">dicks not sucked:</span> <span class="value" id="misses">0</span>/5</div>
+    <div><span class="label">Level:</span> <span class="value" id="level">1</span></div>
+  </div>
 
-<script>
-/**
- * ============================================================================
- * NEON REBEL ENGINE v1.0
- * Pure Vanilla JS // Logic-Heavy Architecture
- * ============================================================================
- */
+  <div id="controls">
+    A / D or ← / → to move &nbsp;•&nbsp; Space to suck &nbsp;•&nbsp; Or just click/tap dicks
+  </div>
 
-// --- AUDIO SYNTHESIZER (No files needed!) ---
-const AudioEngine = {
-    ctx: new (window.AudioContext || window.webkitAudioContext)(),
-    
-    play(freq, type, duration) {
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = type; // square, sawtooth, triangle
-        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-        gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start();
-        osc.stop(this.ctx.currentTime + duration);
-    },
+  <button id="start-btn">Start sucking</button>
 
-    jump() { this.play(150, 'triangle', 0.2); },
-    shoot() { this.play(800, 'square', 0.1); },
-    explode() { this.play(100, 'sawtooth', 0.4); },
-    collect() { this.play(1200, 'sine', 0.1); }
-};
+  <script>
+    const gameContainer = document.getElementById("game-container");
+    const mouth = document.getElementById("mouth");
+    const scoreEl = document.getElementById("score");
+    const missesEl = document.getElementById("misses");
+    const levelEl = document.getElementById("level");
+    const startBtn = document.getElementById("start-btn");
+    const gameOverScreen = document.getElementById("game-over");
+    const finalScoreEl = document.getElementById("final-score");
+    const bestScoreEl = document.getElementById("best-score");
+    const restartBtn = document.getElementById("restart-btn");
 
-// --- VECTOR MATH LIBRARY ---
-class Vec2 {
-    constructor(x, y) { this.x = x; this.y = y; }
-    add(v) { return new Vec2(this.x + v.x, this.y + v.y); }
-    sub(v) { return new Vec2(this.x - v.x, this.y - v.y); }
-    mul(s) { return new Vec2(this.x * s, this.y * s); }
-    mag() { return Math.sqrt(this.x * this.x + this.y * this.y); }
-    normalize() { const m = this.mag(); return m === 0 ? new Vec2(0,0) : this.mul(1/m); }
-}
+    const GAME_WIDTH = 640;
+    const GAME_HEIGHT = 400;
+    const MOUTH_WIDTH = 70;
+    const MOUTH_SPEED = 6;
+    const MAX_MISSES = 5;
 
-// --- PARTICLE CLASS (Game Juice) ---
-class Particle {
-    constructor(x, y, color) {
-        this.pos = new Vec2(x, y);
-        this.vel = new Vec2((Math.random()-0.5)*10, (Math.random()-0.5)*10);
-        this.life = 1.0;
-        this.decay = 0.02 + Math.random() * 0.05;
-        this.color = color;
+    let mouthX = (GAME_WIDTH - MOUTH_WIDTH) / 2;
+    let keys = { left: false, right: false };
+    let sticks = [];
+    let stickSpawnTimer = 0;
+    let stickSpawnInterval = 1200; // ms
+    let lastTime = 0;
+    let score = 0;
+    let misses = 0;
+    let level = 1;
+    let running = false;
+    let bestScore = Number(localStorage.getItem("eatSticksBestScore") || 0);
+
+    bestScoreEl.textContent = bestScore;
+
+    function setMouthPosition() {
+      mouth.style.left = mouthX + "px";
     }
-    update() {
-        this.pos = this.pos.add(this.vel);
-        this.life -= this.decay;
+
+    function createStick() {
+      const stick = document.createElement("div");
+      stick.className = "stick";
+      const stickHeight = 160;
+      stick.style.height = stickHeight + "px";
+      const x = Math.random() * (GAME_WIDTH - 10 - 40) + 20; // some margin
+      stick.style.left = x + "px";
+      stick.style.top = "-170px";
+      gameContainer.appendChild(stick);
+      sticks.push({
+        el: stick,
+        x,
+        y: -170,
+        height: stickHeight,
+        speed: 1.6 + level * 0.2
+      });
+
+      // click/tap to eat
+      stick.addEventListener("click", () => {
+        eatStickByElement(stick);
+      });
+      stick.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        eatStickByElement(stick);
+      });
     }
-}
 
-// --- CORE GAME OBJECTS ---
-class Entity {
-    constructor(x, y, radius, color) {
-        this.pos = new Vec2(x, y);
-        this.vel = new Vec2(0, 0);
-        this.radius = radius;
-        this.color = color;
-        this.destroyed = false;
+    function eatStickByElement(el) {
+      const s = sticks.find(st => st.el === el);
+      if (!s) return;
+      // only allow if it's near mouth height (for feel)
+      const mouthRect = mouth.getBoundingClientRect();
+      const stickRect = el.getBoundingClientRect();
+      if (stickRect.bottom > mouthRect.top - 60 && stickRect.bottom < mouthRect.bottom + 40) {
+        removeStick(s);
+        addScore(10);
+      }
     }
-}
 
-// --- ENGINE MODULE ---
-const Engine = {
-    canvas: document.getElementById('stage'),
-    ctx: null,
-    running: false,
-    player: null,
-    enemies: [],
-    projectiles: [],
-    particles: [],
-    score: 0,
-    keys: {},
+    function removeStick(stickObj) {
+      if (stickObj.el.parentNode) {
+        stickObj.el.parentNode.removeChild(stickObj.el);
+      }
+      sticks = sticks.filter(s => s !== stickObj);
+    }
 
-    init() {
-        this.ctx = this.canvas.getContext('2d');
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
-        this.player = new Entity(window.innerWidth/2, window.innerHeight/2, 20, '#00f2ff');
-        
-        window.addEventListener('keydown', e => this.keys[e.code] = true);
-        window.addEventListener('keyup', e => this.keys[e.code] = false);
-        window.addEventListener('mousedown', () => this.fire());
-    },
+    function addScore(amount) {
+      score += amount;
+      scoreEl.textContent = score;
+      const newLevel = 1 + Math.floor(score / 50);
+      if (newLevel !== level) {
+        level = newLevel;
+        levelEl.textContent = level;
+        stickSpawnInterval = Math.max(400, 1200 - (level - 1) * 120);
+      }
+    }
 
-    start() {
-        document.getElementById('boot-screen').style.display = 'none';
-        AudioEngine.ctx.resume();
-        this.running = true;
-        this.loop();
-    },
+    function addMiss() {
+      misses += 1;
+      missesEl.textContent = misses;
+      if (misses >= MAX_MISSES) {
+        endGame();
+      }
+    }
 
-    fire() {
-        if(!this.running) return;
-        AudioEngine.shoot();
-        const p = new Entity(this.player.pos.x, this.player.pos.y, 4, '#ff0055');
-        // Simple logic: fire upwards
-        p.vel = new Vec2(0, -15);
-        this.projectiles.push(p);
-    },
+    function endGame() {
+      running = false;
+      gameOverScreen.style.display = "flex";
+      finalScoreEl.textContent = score;
+      if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem("eatSticksBestScore", bestScore);
+      }
+      bestScoreEl.textContent = bestScore;
+    }
 
-    spawnEnemy() {
-        const x = Math.random() * this.canvas.width;
-        const e = new Entity(x, -50, 15 + Math.random()*20, '#ff0055');
-        e.vel = new Vec2(0, 2 + Math.random() * 3);
-        this.enemies.push(e);
-    },
+    function resetGame() {
+      sticks.forEach(s => {
+        if (s.el.parentNode) s.el.parentNode.removeChild(s.el);
+      });
+      sticks = [];
+      score = 0;
+      misses = 0;
+      level = 1;
+      stickSpawnInterval = 1200;
+      scoreEl.textContent = score;
+      missesEl.textContent = misses;
+      levelEl.textContent = level;
+      mouthX = (GAME_WIDTH - MOUTH_WIDTH) / 2;
+      setMouthPosition();
+      stickSpawnTimer = 0;
+      lastTime = performance.now();
+      gameOverScreen.style.display = "none";
+    }
 
-    update() {
-        // Player Control
-        const speed = 7;
-        if(this.keys['KeyA']) this.player.pos.x -= speed;
-        if(this.keys['KeyD']) this.player.pos.x += speed;
-        if(this.keys['KeyW']) this.player.pos.y -= speed;
-        if(this.keys['KeyS']) this.player.pos.y += speed;
+    function gameLoop(timestamp) {
+      if (!running) return;
+      const dt = timestamp - lastTime;
+      lastTime = timestamp;
 
-        // Boundary Check
-        this.player.pos.x = Math.max(20, Math.min(this.canvas.width - 20, this.player.pos.x));
+      // move mouth
+      if (keys.left) mouthX -= MOUTH_SPEED;
+      if (keys.right) mouthX += MOUTH_SPEED;
+      mouthX = Math.max(0, Math.min(GAME_WIDTH - MOUTH_WIDTH, mouthX));
+      setMouthPosition();
 
-        // Spawn logic
-        if(Math.random() < 0.05) this.spawnEnemy();
+      // spawn sticks
+      stickSpawnTimer += dt;
+      if (stickSpawnTimer >= stickSpawnInterval) {
+        stickSpawnTimer = 0;
+        createStick();
+      }
 
-        // Update Projectiles
-        this.projectiles.forEach((p, pi) => {
-            p.pos = p.pos.add(p.vel);
-            if(p.pos.y < -10) this.projectiles.splice(pi, 1);
-        });
+      // move sticks
+      const mouthRect = mouth.getBoundingClientRect();
+      sticks.forEach(s => {
+        s.y += s.speed * (dt / 16.67); // scale by frame time
+        s.el.style.top = s.y + "px";
 
-        // Update Enemies & Collision
-        this.enemies.forEach((e, ei) => {
-            e.pos = e.pos.add(e.vel);
-            
-            // Collision with Player
-            const dist = e.pos.sub(this.player.pos).mag();
-            if(dist < e.radius + this.player.radius) {
-                this.gameOver();
-            }
+        const stickRect = s.el.getBoundingClientRect();
 
-            // Collision with Projectiles
-            this.projectiles.forEach((p, pi) => {
-                const hit = e.pos.sub(p.pos).mag();
-                if(hit < e.radius) {
-                    AudioEngine.explode();
-                    this.score += 10;
-                    this.createExplosion(e.pos.x, e.pos.y, '#ff0055');
-                    this.enemies.splice(ei, 1);
-                    this.projectiles.splice(pi, 1);
-                }
-            });
+        const intersectsHorizontally =
+          stickRect.left < mouthRect.right && stickRect.right > mouthRect.left;
+        const nearMouth =
+          stickRect.bottom > mouthRect.top - 10 &&
+          stickRect.bottom < mouthRect.bottom + 10;
 
-            if(e.pos.y > this.canvas.height + 50) this.enemies.splice(ei, 1);
-        });
-
-        // Update Particles
-        this.particles = this.particles.filter(p => p.life > 0);
-        this.particles.forEach(p => p.update());
-
-        document.getElementById('score').innerText = this.score;
-    },
-
-    createExplosion(x, y, color) {
-        for(let i=0; i<15; i++) {
-            this.particles.push(new Particle(x, y, color));
+        if (intersectsHorizontally && nearMouth) {
+          removeStick(s);
+          addScore(10);
+        } else if (s.y + s.height > GAME_HEIGHT - 16) {
+          // hit the ground
+          removeStick(s);
+          addMiss();
         }
-    },
+      });
 
-    draw() {
-        this.ctx.fillStyle = 'rgba(5, 5, 8, 0.3)'; // Trail effect
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-        // Draw Player
-        this.ctx.shadowBlur = 15;
-        this.ctx.shadowColor = '#00f2ff';
-        this.ctx.fillStyle = '#00f2ff';
-        this.ctx.beginPath();
-        this.ctx.arc(this.player.pos.x, this.player.pos.y, this.player.radius, 0, Math.PI*2);
-        this.ctx.fill();
-
-        // Draw Enemies
-        this.ctx.shadowColor = '#ff0055';
-        this.ctx.fillStyle = '#ff0055';
-        this.enemies.forEach(e => {
-            this.ctx.beginPath();
-            this.ctx.arc(e.pos.x, e.pos.y, e.radius, 0, Math.PI*2);
-            this.ctx.fill();
-        });
-
-        // Draw Projectiles
-        this.ctx.fillStyle = 'white';
-        this.projectiles.forEach(p => {
-            this.ctx.fillRect(p.pos.x - 2, p.pos.y - 10, 4, 20);
-        });
-
-        // Draw Particles
-        this.particles.forEach(p => {
-            this.ctx.globalAlpha = p.life;
-            this.ctx.fillStyle = p.color;
-            this.ctx.fillRect(p.pos.x, p.pos.y, 3, 3);
-        });
-        this.ctx.globalAlpha = 1;
-        this.ctx.shadowBlur = 0;
-    },
-
-    loop() {
-        if(!this.running) return;
-        this.update();
-        this.draw();
-        requestAnimationFrame(() => this.loop());
-    },
-
-    gameOver() {
-        this.running = false;
-        alert("CRITICAL SYSTEM FAILURE. SCORE: " + this.score);
-        location.reload();
+      requestAnimationFrame(gameLoop);
     }
-};
 
-window.onload = () => Engine.init();
-</script>
+    function startGame() {
+      resetGame();
+      running = true;
+      lastTime = performance.now();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Keyboard controls
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
+        keys.left = true;
+      }
+      if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
+        keys.right = true;
+      }
+      if (e.key === " " && running) {
+        // “Chomp” – check all sticks near mouth
+        const mouthRect = mouth.getBoundingClientRect();
+        sticks.slice().forEach(s => {
+          const rect = s.el.getBoundingClientRect();
+          const closeHoriz =
+            rect.left < mouthRect.right && rect.right > mouthRect.left;
+          const closeVert =
+            rect.bottom > mouthRect.top - 40 && rect.bottom < mouthRect.bottom + 40;
+          if (closeHoriz && closeVert) {
+            removeStick(s);
+            addScore(10);
+          }
+        });
+      }
+    });
+
+    window.addEventListener("keyup", (e) => {
+      if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
+        keys.left = false;
+      }
+      if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
+        keys.right = false;
+      }
+    });
+
+    // Mouse move to control mouth (optional)
+    gameContainer.addEventListener("mousemove", (e) => {
+      const rect = gameContainer.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      mouthX = Math.max(0, Math.min(GAME_WIDTH - MOUTH_WIDTH, x - MOUTH_WIDTH / 2));
+      setMouthPosition();
+    });
+
+    // Start + restart buttons
+    startBtn.addEventListener("click", () => {
+      if (!running) startGame();
+    });
+
+    restartBtn.addEventListener("click", () => {
+      startGame();
+    });
+
+    // Initial placement
+    setMouthPosition();
+  </script>
 </body>
 </html>
