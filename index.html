@@ -1,514 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>dick sucker - penis man (Three.js)</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Loop Frenzy — One‑Tap Neon Rush</title>
+<meta name="description" content="Loop Frenzy — addictive one‑tap lane jumps, neon particles, frenzy streaks, daily seed, and royalty‑free music."/>
 <style>
-    html, body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        background: #000;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        color: #f5f5f5;
-    }
-    #ui {
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-    }
-    #top-bar {
-        display: flex;
-        justify-content: space-between;
-        padding: 8px 14px;
-        font-size: 13px;
-        text-shadow: 0 0 6px #000;
-    }
-    #center-message {
-        align-self: center;
-        margin-top: 20vh;
-        pointer-events: auto;
-        text-align: center;
-        padding: 16px 24px;
-        border-radius: 10px;
-        background: rgba(0,0,0,0.6);
-        border: 1px solid rgba(255,255,255,0.2);
-    }
-    #center-message h1 {
-        margin: 0 0 6px;
-        font-size: 24px;
-    }
-    #center-message p {
-        margin: 4px 0;
-        font-size: 13px;
-        color: #d0d0ff;
-    }
-    .btn {
-        display: inline-block;
-        margin-top: 10px;
-        padding: 8px 16px;
-        border-radius: 999px;
-        border: 1px solid #ffffff66;
-        background: #0f172a;
-        color: #f9fafb;
-        font-size: 13px;
-        cursor: pointer;
-        pointer-events: auto;
-    }
-    .btn:hover {
-        background: #1f2937;
-    }
-    #crosshair {
-        position: fixed;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        width: 16px;
-        height: 16px;
-        pointer-events: none;
-    }
-    #crosshair::before,
-    #crosshair::after {
-        content: "";
-        position: absolute;
-        background: rgba(255,255,255,0.9);
-    }
-    #crosshair::before {
-        left: 50%;
-        top: 0;
-        width: 2px;
-        height: 16px;
-        transform: translateX(-50%);
-    }
-    #crosshair::after {
-        top: 50%;
-        left: 0;
-        width: 16px;
-        height: 2px;
-        transform: translateY(-50%);
-    }
-    #bottom-hint {
-        padding: 8px 14px 12px;
-        font-size: 11px;
-        color: #cbd5f5;
-        text-shadow: 0 0 6px #000;
-    }
-    .kbd {
-        display: inline-block;
-        padding: 1px 6px;
-        margin: 0 2px;
-        border-radius: 4px;
-        border: 1px solid #ffffff55;
-        background: rgba(15,23,42,0.8);
-        font-size: 11px;
-    }
+  :root {
+    --bg:#0b0f14; --panel:#121821; --border:#1f2a38; --text:#e8f0ff; --muted:#9fb3c8;
+    --accent:#00d4ff; --accent2:#ff2d6f; --good:#7cff7c; --bad:#ff6b6b; --gold:#ffd166; --violet:#b388ff;
+  }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--text); font-family:Inter,system-ui,Segoe UI,Arial; }
+  #game { width:100vw; height:100vh; display:block; cursor:pointer; }
+  .hidden { display:none !important; }
+  #ui { position:fixed; inset:0; pointer-events:none; }
+  #hud { position:absolute; top:12px; left:12px; display:flex; gap:12px; pointer-events:auto; flex-wrap:wrap; }
+  .pill { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:8px 12px; font-size:14px; }
+  #score { color:var(--good); font-weight:700; }
+  #streak { color:var(--accent); }
+  #speed { color:var(--violet); }
+  #seed { color:var(--muted); }
+  #topright { position:absolute; top:12px; right:12px; display:flex; gap:8px; pointer-events:auto; }
+  .btn { pointer-events:auto; display:inline-flex; align-items:center; gap:8px; background:var(--accent); color:#001018; border:none; border-radius:10px; padding:10px 14px; font-weight:700; cursor:pointer; }
+  .btn.secondary { background:#1b2432; color:var(--text); border:1px solid #2a3a52; }
+  .btn.small { padding:6px 10px; font-size:12px; }
+  #start, #gameover { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:20px; width:min(720px,92vw); box-shadow:0 10px 30px rgba(0,0,0,.35); }
+  .title { font-size:22px; font-weight:700; margin-bottom:8px; }
+  .subtitle { color:var(--muted); margin-bottom:16px; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; }
+  .kbd { background:#0e141d; border:1px solid var(--border); border-radius:8px; padding:6px 8px; font-size:13px; }
+  #toast { position:absolute; bottom:12px; left:12px; background:#0e141d; border:1px solid var(--border); border-radius:10px; padding:8px 12px; font-size:13px; pointer-events:none; opacity:0; transform:translateY(8px); transition:opacity .2s, transform .2s; }
+  #toast.show { opacity:1; transform:translateY(0); }
+  #emoji { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:56px; opacity:0; transition:opacity .2s; pointer-events:none; }
 </style>
 </head>
 <body>
+<canvas id="game"></canvas>
+
+<!-- Royalty‑free background music -->
+<audio id="bgMusic" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_7f6b6f8b1d.mp3?filename=neon-gaming-128-bpm-11063.mp3" loop autoplay></audio>
+
 <div id="ui">
-    <div id="top-bar">
-        <div>
-            Huge <strong>dick style</strong> 3D spewer – multiple <code>index.html</code>
-        </div>
-        <div id="stats">
-            Enemies: <span id="enemyCount">0</span> • Score: <span id="score">0</span>
-        </div>
+  <div id="hud">
+    <div class="pill">Score: <span id="score">0</span></div>
+    <div class="pill">Streak: <span id="streak">0</span></div>
+    <div class="pill">Speed: <span id="speed">1.0x</span></div>
+    <div class="pill">Seed: <span id="seed">—</span></div>
+  </div>
+
+  <div id="topright">
+    <button class="btn small" id="btnDaily">Daily</button>
+    <button class="btn small" id="btnMute">Mute</button>
+  </div>
+
+  <div id="emoji">🔥</div>
+  <div id="toast">Frenzy!</div>
+
+  <!-- START -->
+  <div id="start">
+    <div class="card">
+      <div class="title">Loop Frenzy — One‑Tap Neon Rush</div>
+      <div class="subtitle">Tap to jump lanes. Collect orbs. Dodge spikes. Chain 5 perfects to trigger Frenzy Mode.</div>
+      <div class="row">
+        <div class="kbd">Mouse / Space: tap to jump</div>
+        <div class="kbd">R: restart</div>
+        <div class="kbd">M: mute</div>
+      </div>
+      <div style="margin-top:16px" class="row">
+        <button class="btn" id="play">Play</button>
+        <button class="btn secondary" id="daily">Daily Seed</button>
+      </div>
+      <div class="list" id="leader"></div>
     </div>
-    <div id="center-message">
-        <h1>Cum Pit – 3D Shooter</h1>
-        <p>WASD to move • Mouse to look • Left click to shoot • R to respawn enemies</p>
-        <button id="btn-play" class="btn">Click to start &amp; lock mouse</button>
-        <p style="margin-top:6px;font-size:11px;">
-            Drop this file into a GitHub repo as <code>index.html</code>, enable Pages, and share the link.
-        </p>
+  </div>
+
+  <!-- GAME OVER -->
+  <div id="gameover" class="hidden">
+    <div class="card">
+      <div class="title">Loop broken</div>
+      <div class="subtitle">Score: <span id="finalScore">0</span> — Streak peak: <span id="finalStreak">0</span></div>
+      <div class="row">
+        <button class="btn" id="again">Play again</button>
+      </div>
     </div>
-    <div id="crosshair"></div>
-    <div id="bottom-hint">
-        If you lose the dick, press <span class="kbd">Esc</span> to unlock dicks.
-    </div>
+  </div>
 </div>
 
-<!-- Three.js + PointerLockControls from CDN -->
-<script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
-<script src="https://unpkg.com/three@0.158.0/examples/js/controls/PointerLockControls.js"></script>
-
 <script>
-/**
- * Very small “Halo‑like” prototype:
- * - Pointer‑lock FPS camera
- * - Simple arena with walls & floor
- * - 10 enemy “targets” that wander
- * - Hitscan shooting with raycaster
- */
+/* =========================
+   UTIL
+   ========================= */
+const Util = (() => {
+  let seed = Date.now()%1000000;
+  function setSeed(s){ seed=s; }
+  function rand(){ seed^=seed<<13; seed^=seed>>>17; seed^=seed<<5; return ((seed>>>0)/0xFFFFFFFF); }
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const now=()=>performance.now();
+  function fmt(n){ return n.toLocaleString(); }
+  return { setSeed, rand, clamp, now, fmt };
+})();
 
-let scene, camera, renderer;
-let controls;
-let clock = new THREE.Clock();
-const bullets = [];
-const enemies = [];
-let score = 0;
+/* =========================
+   GAME
+   ========================= */
+(() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  let W = canvas.width = window.innerWidth;
+  let H = canvas.height = window.innerHeight;
 
-const enemyCountSpan = document.getElementById("enemyCount");
-const scoreSpan = document.getElementById("score");
-const centerMessage = document.getElementById("center-message");
-const btnPlay = document.getElementById("btn-play");
+  const bgMusic = document.getElementById('bgMusic');
+  bgMusic.volume = 0.4;
 
-let keys = { w:false, a:false, s:false, d:false };
-let moveSpeed = 30;
-let canShoot = true;
-let shootCooldown = 0.2; // seconds
-let shootTimer = 0;
+  // HUD
+  const hud = {
+    score: document.getElementById('score'),
+    streak: document.getElementById('streak'),
+    speed: document.getElementById('speed'),
+    seed: document.getElementById('seed'),
+    start: document.getElementById('start'),
+    gameover: document.getElementById('gameover'),
+    finalScore: document.getElementById('finalScore'),
+    finalStreak: document.getElementById('finalStreak'),
+    leader: document.getElementById('leader'),
+    toast: document.getElementById('toast'),
+    emoji: document.getElementById('emoji'),
+  };
 
-let pointerLocked = false;
+  // UI
+  const ui = {
+    play: document.getElementById('play'),
+    daily: document.getElementById('daily'),
+    again: document.getElementById('again'),
+    btnDaily: document.getElementById('btnDaily'),
+    btnMute: document.getElementById('btnMute'),
+  };
 
-/* -------------------- INIT SCENE -------------------- */
-
-init();
-animate();
-
-function init() {
-    // Scene
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x020617);
-    scene.fog = new THREE.Fog(0x020617, 30, 120);
-
-    // Camera
-    camera = new THREE.PerspectiveCamera(
-        75,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        1000
-    );
-
-    // Renderer
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;
-    document.body.appendChild(renderer.domElement);
-
-    // Lights
-    const hemi = new THREE.HemisphereLight(0x88ccff, 0x202040, 0.7);
-    scene.add(hemi);
-
-    const dir = new THREE.DirectionalLight(0xffffff, 0.7);
-    dir.position.set(10, 25, 5);
-    dir.castShadow = true;
-    dir.shadow.camera.near = 1;
-    dir.shadow.camera.far = 100;
-    scene.add(dir);
-
-    // Floor
-    const floorGeo = new THREE.PlaneGeometry(200, 200, 20, 20);
-    const floorMat = new THREE.MeshStandardMaterial({
-        color: 0x111827,
-        metalness: 0.1,
-        roughness: 0.8
-    });
-    const floor = new THREE.Mesh(floorGeo, floorMat);
-    floor.rotation.x = -Math.PI / 2;
-    floor.receiveShadow = true;
-    scene.add(floor);
-
-    // Arena walls
-    const wallMat = new THREE.MeshStandardMaterial({
-        color: 0x1f2937,
-        metalness: 0.3,
-        roughness: 0.5
-    });
-    const wallGeo = new THREE.BoxGeometry(200, 30, 2);
-    const wall1 = new THREE.Mesh(wallGeo, wallMat);
-    wall1.position.set(0, 15, -100);
-    wall1.receiveShadow = true;
-    wall1.castShadow = true;
-
-    const wall2 = wall1.clone();
-    wall2.position.set(0, 15, 100);
-    wall2.rotation.y = Math.PI;
-
-    const wall3 = new THREE.Mesh(new THREE.BoxGeometry(2, 30, 200), wallMat);
-    wall3.position.set(-100, 15, 0);
-    wall3.receiveShadow = true;
-    wall3.castShadow = true;
-
-    const wall4 = wall3.clone();
-    wall4.position.set(100, 15, 0);
-
-    scene.add(wall1, wall2, wall3, wall4);
-
-    // Some pillars
-    const pillarGeo = new THREE.CylinderGeometry(2, 2, 20, 16);
-    const pillarMat = new THREE.MeshStandardMaterial({
-        color: 0x334155,
-        metalness: 0.4,
-        roughness: 0.6
-    });
-    for (let i = 0; i < 6; i++) {
-        const pill = new THREE.Mesh(pillarGeo, pillarMat);
-        const angle = (i / 6) * Math.PI * 2;
-        const r = 35;
-        pill.position.set(Math.cos(angle) * r, 10, Math.sin(angle) * r);
-        pill.castShadow = true;
-        pill.receiveShadow = true;
-        scene.add(pill);
-    }
-
-    // Player position
-    camera.position.set(0, 4, 40);
-
-    // Controls
-    controls = new THREE.PointerLockControls(camera, renderer.domElement);
-    controls.getObject().position.set(0, 4, 40);
-    scene.add(controls.getObject());
-
-    // Pointer lock events
-    controls.addEventListener("lock", () => {
-        pointerLocked = true;
-        centerMessage.style.display = "none";
-    });
-    controls.addEventListener("unlock", () => {
-        pointerLocked = false;
-        centerMessage.style.display = "block";
-    });
-
-    btnPlay.addEventListener("click", () => {
-        controls.lock();
-    });
-
-    // spawn enemies
-    spawnEnemies(10);
-
-    // Events
-    window.addEventListener("resize", onWindowResize);
-    document.addEventListener("keydown", onKeyDown);
-    document.addEventListener("keyup", onKeyUp);
-    document.addEventListener("mousedown", onMouseDown);
-}
-
-function spawnEnemies(count) {
-    // clear old enemies
-    for (const e of enemies) scene.remove(e.mesh);
-    enemies.length = 0;
-
-    const enemyGeo = new THREE.SphereGeometry(1.2, 16, 16);
-    const enemyMat = new THREE.MeshStandardMaterial({
-        color: 0x22c55e,
-        emissive: 0x16a34a,
-        emissiveIntensity: 0.6
-    });
-
-    for (let i = 0; i < count; i++) {
-        const mesh = new THREE.Mesh(enemyGeo, enemyMat.clone());
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-        const x = (Math.random() - 0.5) * 140;
-        const z = (Math.random() - 0.5) * 140;
-        mesh.position.set(x, 2, z);
-        scene.add(mesh);
-
-        enemies.push({
-            mesh,
-            velocity: new THREE.Vector3(
-                (Math.random() - 0.5) * 6,
-                0,
-                (Math.random() - 0.5) * 6
-            ),
-            alive: true
-        });
-    }
-    enemyCountSpan.textContent = enemies.length;
-}
-
-/* -------------------- INPUT -------------------- */
-
-function onKeyDown(e) {
-    if (e.code === "KeyW" || e.code === "ArrowUp") keys.w = true;
-    if (e.code === "KeyS" || e.code === "ArrowDown") keys.s = true;
-    if (e.code === "KeyA" || e.code === "ArrowLeft") keys.a = true;
-    if (e.code === "KeyD" || e.code === "ArrowRight") keys.d = true;
-
-    if (e.code === "KeyR") {
-        spawnEnemies(10);
-    }
-}
-
-function onKeyUp(e) {
-    if (e.code === "KeyW" || e.code === "ArrowUp") keys.w = false;
-    if (e.code === "KeyS" || e.code === "ArrowDown") keys.s = false;
-    if (e.code === "KeyA" || e.code === "ArrowLeft") keys.a = false;
-    if (e.code === "KeyD" || e.code === "ArrowRight") keys.d = false;
-}
-
-function onMouseDown(e) {
-    if (!pointerLocked) return;
-    if (e.button === 0) {
-        shoot();
-    }
-}
-
-/* -------------------- SHOOTING -------------------- */
-
-function shoot() {
-    if (!canShoot) return;
-
-    // simple hitscan ray
-    const origin = new THREE.Vector3();
-    origin.copy(controls.getObject().position);
-    origin.y += 1.0;
-
-    const direction = new THREE.Vector3();
-    camera.getWorldDirection(direction);
-
-    const raycaster = new THREE.Raycaster(origin, direction);
-    const enemyMeshes = enemies.filter(e => e.alive).map(e => e.mesh);
-    const intersects = raycaster.intersectObjects(enemyMeshes, false);
-
-    if (intersects.length > 0) {
-        const hit = intersects[0].object;
-        // find enemy
-        const enemy = enemies.find(e => e.mesh === hit);
-        if (enemy && enemy.alive) {
-            enemy.alive = false;
-            scene.remove(enemy.mesh);
-            score += 100;
-            scoreSpan.textContent = score;
-            enemyCountSpan.textContent = enemies.filter(e => e.alive).length;
-            // impact flash
-            spawnImpact(hit.position);
-        }
-    }
-
-    // muzzle flash / tracer
-    spawnBulletVisual(origin, direction);
-
-    canShoot = false;
-    shootTimer = shootCooldown;
-}
-
-function spawnBulletVisual(origin, dir) {
-    const geo = new THREE.SphereGeometry(0.15, 8, 8);
-    const mat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
-    const bullet = new THREE.Mesh(geo, mat);
-    bullet.position.copy(origin);
-    scene.add(bullet);
-    bullets.push({ mesh: bullet, dir: dir.clone(), life: 0.2 });
-}
-
-function spawnImpact(position) {
-    const geo = new THREE.SphereGeometry(0.6, 12, 12);
-    const mat = new THREE.MeshBasicMaterial({ color: 0xf97316 });
-    const flash = new THREE.Mesh(geo, mat);
-    flash.position.copy(position);
-    scene.add(flash);
-
-    setTimeout(() => {
-        scene.remove(flash);
-    }, 120);
-}
-
-/* -------------------- LOOP -------------------- */
-
-function animate() {
-    requestAnimationFrame(animate);
-    const delta = clock.getDelta();
-
-    if (pointerLocked) {
-        updatePlayer(delta);
-        updateEnemies(delta);
-        updateBullets(delta);
-        if (!canShoot) {
-            shootTimer -= delta;
-            if (shootTimer <= 0) {
-                canShoot = true;
-            }
-        }
-    }
-
-    renderer.render(scene, camera);
-}
-
-function updatePlayer(delta) {
-    const velocity = new THREE.Vector3();
-    const direction = new THREE.Vector3();
-
-    const speed = moveSpeed * delta;
-
-    direction.z = Number(keys.w) - Number(keys.s);
-    direction.x = Number(keys.d) - Number(keys.a);
-    direction.normalize();
-
-    if (keys.w || keys.s) {
-        velocity.z -= direction.z * speed;
-    }
-    if (keys.a || keys.d) {
-        velocity.x -= direction.x * speed;
-    }
-
-    // move in local space relative to camera rotation
-    const move = new THREE.Vector3();
-    camera.getWorldDirection(move);
-    move.y = 0;
-    move.normalize();
-
-    const right = new THREE.Vector3();
-    right.crossVectors(move, new THREE.Vector3(0, 1, 0)).normalize();
-
-    const moveVec = new THREE.Vector3();
-    moveVec.addScaledVector(move, velocity.z);
-    moveVec.addScaledVector(right, velocity.x);
-
-    controls.getObject().position.add(moveVec);
-
-    // clamp to arena
-    const pos = controls.getObject().position;
-    const limit = 95;
-    if (pos.x > limit) pos.x = limit;
-    if (pos.x < -limit) pos.x = -limit;
-    if (pos.z > limit) pos.z = limit;
-    if (pos.z < -limit) pos.z = -limit;
-    if (pos.y < 2) pos.y = 2;
-}
-
-function updateEnemies(delta) {
-    for (const e of enemies) {
-        if (!e.alive) continue;
-        e.mesh.position.addScaledVector(e.velocity, delta);
-
-        // bounce off walls
-        if (e.mesh.position.x > 90 || e.mesh.position.x < -90) {
-            e.velocity.x *= -1;
-        }
-        if (e.mesh.position.z > 90 || e.mesh.position.z < -90) {
-            e.velocity.z *= -1;
-        }
-
-        // gently bob
-        e.mesh.position.y = 2 + Math.sin(Date.now() * 0.002 + e.mesh.position.x) * 0.3;
-    }
-}
-
-function updateBullets(delta) {
-    for (let i = bullets.length - 1; i >= 0; i--) {
-        const b = bullets[i];
-        b.mesh.position.addScaledVector(b.dir, delta * 80);
-        b.life -= delta;
-        if (b.life <= 0) {
-            scene.remove(b.mesh);
-            bullets.splice(i, 1);
-        }
-    }
-}
-
-/* -------------------- MISC -------------------- */
-
-function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-}
-</script>
-</body>
-</html>
+  // State
+  let running=false, t=0, dt=0, last=Util.now();
+  let score=0, streak=0, peakStreak=0, speed=1, seedVal=Date.now()%1000000;
+  let lane=2, lanes=5, jumpCooldown=0
