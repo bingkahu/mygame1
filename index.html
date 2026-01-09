@@ -142,8 +142,8 @@
       border-radius: 40px 40px 60px 60px;
     }
 
-    /* Stick */
-    .stick {
+    /* dick */
+    .dick {
       position: absolute;
       width: 10px;
       height: 160px; /* long sticks */
@@ -200,8 +200,8 @@
   <script>
     const gameContainer = document.getElementById("game-container");
     const mouth = document.getElementById("mouth");
-    const scoreEl = document.getElementById("score");
-    const missesEl = document.getElementById("misses");
+    const scoreEl = document.getElementById("dicks sucked");
+    const missesEl = document.getElementById("dicks not sucked");
     const levelEl = document.getElementById("level");
     const startBtn = document.getElementById("start-btn");
     const gameOverScreen = document.getElementById("game-over");
@@ -213,19 +213,19 @@
     const GAME_HEIGHT = 400;
     const MOUTH_WIDTH = 70;
     const MOUTH_SPEED = 6;
-    const MAX_MISSES = 5;
+    const MAX_MISSES = 3;
 
     let mouthX = (GAME_WIDTH - MOUTH_WIDTH) / 2;
     let keys = { left: false, right: false };
-    let sticks = [];
+    let dicks = [];
     let stickSpawnTimer = 0;
     let stickSpawnInterval = 1200; // ms
     let lastTime = 0;
     let score = 0;
-    let misses = 0;
+    let dicksNotSucked = 0;
     let level = 1;
     let running = false;
-    let bestScore = Number(localStorage.getItem("eatSticksBestScore") || 0);
+    let bestScore = Number(localStorage.getItem("eatDicksBestScore") || 0);
 
     bestScoreEl.textContent = bestScore;
 
@@ -233,20 +233,20 @@
       mouth.style.left = mouthX + "px";
     }
 
-    function createStick() {
-      const stick = document.createElement("div");
-      stick.className = "stick";
-      const stickHeight = 160;
-      stick.style.height = stickHeight + "px";
+    function createdick() {
+      const dick = document.createElement("div");
+      dick.className = "stick";
+      const dickHeight = 160;
+      dick.style.height = stickHeight + "px";
       const x = Math.random() * (GAME_WIDTH - 10 - 40) + 20; // some margin
-      stick.style.left = x + "px";
-      stick.style.top = "-170px";
+      dick.style.left = x + "px";
+      dick.style.top = "-170px";
       gameContainer.appendChild(stick);
-      sticks.push({
-        el: stick,
+      dick.push({
+        el: dick,
         x,
         y: -170,
-        height: stickHeight,
+        height: dickHeight,
         speed: 1.6 + level * 0.2
       });
 
@@ -260,23 +260,23 @@
       });
     }
 
-    function eatStickByElement(el) {
-      const s = sticks.find(st => st.el === el);
+    function eatDicksByElement(el) {
+      const s = dicks.find(st => st.el === el);
       if (!s) return;
       // only allow if it's near mouth height (for feel)
       const mouthRect = mouth.getBoundingClientRect();
-      const stickRect = el.getBoundingClientRect();
+      const dickRect = el.getBoundingClientRect();
       if (stickRect.bottom > mouthRect.top - 60 && stickRect.bottom < mouthRect.bottom + 40) {
         removeStick(s);
         addScore(10);
       }
     }
 
-    function removeStick(stickObj) {
-      if (stickObj.el.parentNode) {
-        stickObj.el.parentNode.removeChild(stickObj.el);
+    function removeDick(dickObj) {
+      if (dickObj.el.parentNode) {
+        dickObj.el.parentNode.removeChild(dicksObj.el);
       }
-      sticks = sticks.filter(s => s !== stickObj);
+      dicks = dicks.filter(s => s !== dickObj);
     }
 
     function addScore(amount) {
@@ -286,7 +286,7 @@
       if (newLevel !== level) {
         level = newLevel;
         levelEl.textContent = level;
-        stickSpawnInterval = Math.max(400, 1200 - (level - 1) * 120);
+        dickSpawnInterval = Math.max(400, 1200 - (level - 1) * 120);
       }
     }
 
@@ -313,9 +313,9 @@
       sticks.forEach(s => {
         if (s.el.parentNode) s.el.parentNode.removeChild(s.el);
       });
-      sticks = [];
+      dicks = [];
       score = 0;
-      misses = 0;
+      dicks not sucked = 0;
       level = 1;
       stickSpawnInterval = 1200;
       scoreEl.textContent = score;
@@ -323,7 +323,7 @@
       levelEl.textContent = level;
       mouthX = (GAME_WIDTH - MOUTH_WIDTH) / 2;
       setMouthPosition();
-      stickSpawnTimer = 0;
+      dickSpawnTimer = 0;
       lastTime = performance.now();
       gameOverScreen.style.display = "none";
     }
@@ -340,10 +340,10 @@
       setMouthPosition();
 
       // spawn sticks
-      stickSpawnTimer += dt;
-      if (stickSpawnTimer >= stickSpawnInterval) {
-        stickSpawnTimer = 0;
-        createStick();
+      dickSpawnTimer += dt;
+      if (dickSpawnTimer >= dickSpawnInterval) {
+        dickSpawnTimer = 0;
+        createdick();
       }
 
       // move sticks
