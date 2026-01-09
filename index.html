@@ -1,191 +1,315 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>dick sucking speed sex game</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-    html, body {
-        margin: 0;
-        padding: 0;
-        background: #111;
-        overflow: hidden;
-        font-family: Arial, sans-serif;
-        color: #fff;
-    }
-    #game {
-        position: relative;
-        width: 400px;
-        height: 600px;
-        margin: 20px auto;
-        background: #222;
-        border: 3px solid #555;
-        overflow: hidden;
-    }
-    .road-line {
-        position: absolute;
-        width: 10px;
-        height: 80px;
-        background: #fff;
-        left: 195px;
-        opacity: 0.5;
-    }
-    #player {
-        position: absolute;
-        width: 60px;
-        height: 100px;
-        bottom: 20px;
-        left: 70px;
-        background: #4ade80;
-        border-radius: 10px;
-    }
-    .enemy {
-        position: absolute;
-        width: 60px;
-        height: 100px;
-        background: #ef4444;
-        border-radius: 10px;
-    }
-    #score {
-        text-align: center;
-        font-size: 22px;
-        margin-top: 10px;
-    }
-</style>
-</head>
-<body>
+    <meta charset="UTF-8">
+    <title>NEON REBEL // SYSTEM_v1.0</title>
+    <style>
+        :root {
+            --neon-blue: #00f2ff;
+            --neon-pink: #ff0055;
+            --bg-dark: #050508;
+            --panel: rgba(20, 20, 25, 0.95);
+        }
 
-<div id="score">sucked dicks: 0</div>
-<div id="game">
-    <div id="player"></div>
-</div>
+        body, html {
+            margin: 0; padding: 0;
+            background: var(--bg-dark);
+            color: white;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        canvas { display: block; cursor: crosshair; }
+
+        /* --- UI OVERLAY --- */
+        #hud {
+            position: absolute; top: 20px; left: 20px;
+            pointer-events: none;
+            text-transform: uppercase;
+        }
+
+        .stat-box {
+            background: var(--panel);
+            border-left: 4px solid var(--neon-blue);
+            padding: 10px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+        }
+
+        #boot-screen {
+            position: absolute; inset: 0;
+            background: black;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 9999;
+        }
+
+        .terminal-text { color: var(--neon-blue); margin: 5px; }
+
+        /* --- CRT SHADER EFFECT --- */
+        .crt::before {
+            content: " ";
+            display: block; position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        .btn {
+            background: none; border: 2px solid var(--neon-pink);
+            color: var(--neon-pink); padding: 15px 30px;
+            cursor: pointer; font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .btn:hover { background: var(--neon-pink); color: white; box-shadow: 0 0 20px var(--neon-pink); }
+    </style>
+</head>
+<body class="crt">
+
+    <div id="boot-screen">
+        <h1 class="terminal-text">> LOADING_SYSTEM...</h1>
+        <p class="terminal-text">> INITIALIZING_NEON_CORE...</p>
+        <p class="terminal-text">> BYPASSING_FIREWALL...</p>
+        <br>
+        <button class="btn" onclick="Engine.start()">[ EXECUTE_GAME ]</button>
+    </div>
+
+    <div id="hud">
+        <div class="stat-box">CORE_STABILITY: <span id="hp">100</span>%</div>
+        <div class="stat-box">FRAG_COUNT: <span id="score">0</span></div>
+        <div class="stat-box">SYSTEM_LOAD: <span id="load">1.0</span>x</div>
+    </div>
+
+    <canvas id="stage"></canvas>
 
 <script>
-/* ------------------------------
-   BASIC GAME VARIABLES
------------------------------- */
-const game = document.getElementById("game");
-const player = document.getElementById("player");
-const scoreDisplay = document.getElementById("score");
+/**
+ * ============================================================================
+ * NEON REBEL ENGINE v1.0
+ * Pure Vanilla JS // Logic-Heavy Architecture
+ * ============================================================================
+ */
 
-let lanes = [70, 170, 270]; // 3 lanes
-let currentLane = 0;
-let enemies = [];
-let score = 0;
-let gameOver = false;
+// --- AUDIO SYNTHESIZER (No files needed!) ---
+const AudioEngine = {
+    ctx: new (window.AudioContext || window.webkitAudioContext)(),
+    
+    play(freq, type, duration) {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type; // square, sawtooth, triangle
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration);
+    },
 
-/* ------------------------------
-   ROAD LINES (MOVING)
------------------------------- */
-let roadLines = [];
-for (let i = 0; i < 6; i++) {
-    let line = document.createElement("div");
-    line.classList.add("road-line");
-    line.style.top = (i * 120) + "px";
-    game.appendChild(line);
-    roadLines.push(line);
+    jump() { this.play(150, 'triangle', 0.2); },
+    shoot() { this.play(800, 'square', 0.1); },
+    explode() { this.play(100, 'sawtooth', 0.4); },
+    collect() { this.play(1200, 'sine', 0.1); }
+};
+
+// --- VECTOR MATH LIBRARY ---
+class Vec2 {
+    constructor(x, y) { this.x = x; this.y = y; }
+    add(v) { return new Vec2(this.x + v.x, this.y + v.y); }
+    sub(v) { return new Vec2(this.x - v.x, this.y - v.y); }
+    mul(s) { return new Vec2(this.x * s, this.y * s); }
+    mag() { return Math.sqrt(this.x * this.x + this.y * this.y); }
+    normalize() { const m = this.mag(); return m === 0 ? new Vec2(0,0) : this.mul(1/m); }
 }
 
-/* ------------------------------
-   PLAYER MOVEMENT
------------------------------- */
-function movePlayer(dir) {
-    if (gameOver) return;
-    currentLane += dir;
-    if (currentLane < 0) currentLane = 0;
-    if (currentLane > 2) currentLane = 2;
-    player.style.left = lanes[currentLane] + "px";
+// --- PARTICLE CLASS (Game Juice) ---
+class Particle {
+    constructor(x, y, color) {
+        this.pos = new Vec2(x, y);
+        this.vel = new Vec2((Math.random()-0.5)*10, (Math.random()-0.5)*10);
+        this.life = 1.0;
+        this.decay = 0.02 + Math.random() * 0.05;
+        this.color = color;
+    }
+    update() {
+        this.pos = this.pos.add(this.vel);
+        this.life -= this.decay;
+    }
 }
 
-document.addEventListener("keydown", e => {
-    if (e.key === "ArrowLeft" || e.key === "a") movePlayer(-1);
-    if (e.key === "ArrowRight" || e.key === "d") movePlayer(1);
-});
-
-/* ------------------------------
-   ENEMY SPAWNING
------------------------------- */
-function spawnEnemy() {
-    if (gameOver) return;
-
-    let lane = Math.floor(Math.random() * 3);
-    let enemy = document.createElement("div");
-    enemy.classList.add("enemy");
-    enemy.style.left = lanes[lane] + "px";
-    enemy.style.top = "-120px";
-
-    game.appendChild(enemy);
-    enemies.push({ el: enemy, lane: lane, y: -120 });
+// --- CORE GAME OBJECTS ---
+class Entity {
+    constructor(x, y, radius, color) {
+        this.pos = new Vec2(x, y);
+        this.vel = new Vec2(0, 0);
+        this.radius = radius;
+        this.color = color;
+        this.destroyed = false;
+    }
 }
 
-/* ------------------------------
-   COLLISION CHECK
------------------------------- */
-function checkCollision(enemy) {
-    let px = lanes[currentLane];
-    let py = 480; // player Y
+// --- ENGINE MODULE ---
+const Engine = {
+    canvas: document.getElementById('stage'),
+    ctx: null,
+    running: false,
+    player: null,
+    enemies: [],
+    projectiles: [],
+    particles: [],
+    score: 0,
+    keys: {},
 
-    let ex = lanes[enemy.lane];
-    let ey = enemy.y;
+    init() {
+        this.ctx = this.canvas.getContext('2d');
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+        this.player = new Entity(window.innerWidth/2, window.innerHeight/2, 20, '#00f2ff');
+        
+        window.addEventListener('keydown', e => this.keys[e.code] = true);
+        window.addEventListener('keyup', e => this.keys[e.code] = false);
+        window.addEventListener('mousedown', () => this.fire());
+    },
 
-    return Math.abs(px - ex) < 10 && Math.abs(py - ey) < 100;
-}
+    start() {
+        document.getElementById('boot-screen').style.display = 'none';
+        AudioEngine.ctx.resume();
+        this.running = true;
+        this.loop();
+    },
 
-/* ------------------------------
-   GAME LOOP
------------------------------- */
-function update() {
-    if (gameOver) return;
+    fire() {
+        if(!this.running) return;
+        AudioEngine.shoot();
+        const p = new Entity(this.player.pos.x, this.player.pos.y, 4, '#ff0055');
+        // Simple logic: fire upwards
+        p.vel = new Vec2(0, -15);
+        this.projectiles.push(p);
+    },
 
-    // Move road lines
-    roadLines.forEach(line => {
-        let y = parseInt(line.style.top);
-        y += 8;
-        if (y > 600) y = -120;
-        line.style.top = y + "px";
-    });
+    spawnEnemy() {
+        const x = Math.random() * this.canvas.width;
+        const e = new Entity(x, -50, 15 + Math.random()*20, '#ff0055');
+        e.vel = new Vec2(0, 2 + Math.random() * 3);
+        this.enemies.push(e);
+    },
 
-    // Move enemies
-    enemies.forEach(enemy => {
-        enemy.y += 6;
-        enemy.el.style.top = enemy.y + "px";
+    update() {
+        // Player Control
+        const speed = 7;
+        if(this.keys['KeyA']) this.player.pos.x -= speed;
+        if(this.keys['KeyD']) this.player.pos.x += speed;
+        if(this.keys['KeyW']) this.player.pos.y -= speed;
+        if(this.keys['KeyS']) this.player.pos.y += speed;
 
-        if (checkCollision(enemy)) {
-            endGame();
+        // Boundary Check
+        this.player.pos.x = Math.max(20, Math.min(this.canvas.width - 20, this.player.pos.x));
+
+        // Spawn logic
+        if(Math.random() < 0.05) this.spawnEnemy();
+
+        // Update Projectiles
+        this.projectiles.forEach((p, pi) => {
+            p.pos = p.pos.add(p.vel);
+            if(p.pos.y < -10) this.projectiles.splice(pi, 1);
+        });
+
+        // Update Enemies & Collision
+        this.enemies.forEach((e, ei) => {
+            e.pos = e.pos.add(e.vel);
+            
+            // Collision with Player
+            const dist = e.pos.sub(this.player.pos).mag();
+            if(dist < e.radius + this.player.radius) {
+                this.gameOver();
+            }
+
+            // Collision with Projectiles
+            this.projectiles.forEach((p, pi) => {
+                const hit = e.pos.sub(p.pos).mag();
+                if(hit < e.radius) {
+                    AudioEngine.explode();
+                    this.score += 10;
+                    this.createExplosion(e.pos.x, e.pos.y, '#ff0055');
+                    this.enemies.splice(ei, 1);
+                    this.projectiles.splice(pi, 1);
+                }
+            });
+
+            if(e.pos.y > this.canvas.height + 50) this.enemies.splice(ei, 1);
+        });
+
+        // Update Particles
+        this.particles = this.particles.filter(p => p.life > 0);
+        this.particles.forEach(p => p.update());
+
+        document.getElementById('score').innerText = this.score;
+    },
+
+    createExplosion(x, y, color) {
+        for(let i=0; i<15; i++) {
+            this.particles.push(new Particle(x, y, color));
         }
-    });
+    },
 
-    // Remove off-screen enemies
-    enemies = enemies.filter(e => {
-        if (e.y > 700) {
-            e.el.remove();
-            return false;
-        }
-        return true;
-    });
+    draw() {
+        this.ctx.fillStyle = 'rgba(5, 5, 8, 0.3)'; // Trail effect
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Increase score
-    score++;
-    scoreDisplay.textContent = "Score: " + score;
+        // Draw Player
+        this.ctx.shadowBlur = 15;
+        this.ctx.shadowColor = '#00f2ff';
+        this.ctx.fillStyle = '#00f2ff';
+        this.ctx.beginPath();
+        this.ctx.arc(this.player.pos.x, this.player.pos.y, this.player.radius, 0, Math.PI*2);
+        this.ctx.fill();
 
-    requestAnimationFrame(update);
-}
+        // Draw Enemies
+        this.ctx.shadowColor = '#ff0055';
+        this.ctx.fillStyle = '#ff0055';
+        this.enemies.forEach(e => {
+            this.ctx.beginPath();
+            this.ctx.arc(e.pos.x, e.pos.y, e.radius, 0, Math.PI*2);
+            this.ctx.fill();
+        });
 
-/* ------------------------------
-   GAME OVER
------------------------------- */
-function endGame() {
-    gameOver = true;
-    alert("CRASH! Final Score: " + score);
-    location.reload();
-}
+        // Draw Projectiles
+        this.ctx.fillStyle = 'white';
+        this.projectiles.forEach(p => {
+            this.ctx.fillRect(p.pos.x - 2, p.pos.y - 10, 4, 20);
+        });
 
-/* ------------------------------
-   START GAME
------------------------------- */
-setInterval(spawnEnemy, 900);
-update();
+        // Draw Particles
+        this.particles.forEach(p => {
+            this.ctx.globalAlpha = p.life;
+            this.ctx.fillStyle = p.color;
+            this.ctx.fillRect(p.pos.x, p.pos.y, 3, 3);
+        });
+        this.ctx.globalAlpha = 1;
+        this.ctx.shadowBlur = 0;
+    },
+
+    loop() {
+        if(!this.running) return;
+        this.update();
+        this.draw();
+        requestAnimationFrame(() => this.loop());
+    },
+
+    gameOver() {
+        this.running = false;
+        alert("CRITICAL SYSTEM FAILURE. SCORE: " + this.score);
+        location.reload();
+    }
+};
+
+window.onload = () => Engine.init();
 </script>
-
 </body>
 </html>
