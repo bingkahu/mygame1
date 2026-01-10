@@ -1,152 +1,195 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>10D Shape Simulator</title>
-  <style>
-    body { margin: 0; overflow: hidden; background: #000; }
-    #ui {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      color: white;
-      font-family: sans-serif;
-      background: rgba(0,0,0,0.6);
-      padding: 10px;
-      border-radius: 8px;
-    }
-    label { display: block; font-size: 12px; }
-  </style>
+<meta charset="UTF-8">
+<title>DIMSHIFT</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #06060a;
+  overflow: hidden;
+  font-family: system-ui, monospace;
+  color: white;
+}
+canvas {
+  display: block;
+}
+#hud {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  font-size: 14px;
+  opacity: 0.85;
+}
+#center {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+  font-size: 24px;
+}
+small {
+  font-size: 14px;
+  opacity: 0.7;
+}
+</style>
 </head>
 <body>
 
-<div id="ui">
-  <label>Rotate X–W <input type="range" min="0" max="6.28" step="0.01" id="xw"></label>
-  <label>Rotate Y–W <input type="range" min="0" max="6.28" step="0.01" id="yw"></label>
-  <label>Rotate W–V <input type="range" min="0" max="6.28" step="0.01" id="wv"></label>
+<canvas id="c"></canvas>
+
+<div id="hud">
+  Score: <span id="score">0</span><br>
+  Dimension: <span id="dim">A</span>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.158/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.158/examples/js/controls/OrbitControls.js"></script>
+<div id="center" id="msg"></div>
 
 <script>
-/* =========================
-   THREE.JS SETUP
-========================= */
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
-camera.position.z = 5;
+/* ======================
+   CANVAS SETUP
+====================== */
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(innerWidth, innerHeight);
-document.body.appendChild(renderer.domElement);
-
-const controls = new THREE.OrbitControls(camera, renderer.domElement);
-
-/* =========================
-   5D HYPERCUBE
-========================= */
-
-// Create vertices of a 5D hypercube
-let vertices5D = [];
-for (let i = 0; i < 32; i++) {
-  vertices5D.push([
-    (i & 1) ? 1 : -1,
-    (i & 2) ? 1 : -1,
-    (i & 4) ? 1 : -1,
-    (i & 8) ? 1 : -1,
-    (i & 16) ? 1 : -1
-  ]);
+function resize() {
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
 }
+resize();
+addEventListener("resize", resize);
 
-// Generate edges
-let edges = [];
-for (let i = 0; i < 32; i++) {
-  for (let j = i + 1; j < 32; j++) {
-    let diff = 0;
-    for (let d = 0; d < 5; d++) {
-      if (vertices5D[i][d] !== vertices5D[j][d]) diff++;
-    }
-    if (diff === 1) edges.push([i, j]);
-  }
-}
+/* ======================
+   GAME STATE
+====================== */
+let running = false;
+let dimension = 0; // 0 = A, 1 = B
+let score = 0;
+let speed = 3;
+let spawnDelay = 80;
+let obstacles = [];
+let flash = 0;
 
-/* =========================
-   ROTATION & PROJECTION
-========================= */
-
-function rotate5D(p, a, b, angle) {
-  let x = p[a], y = p[b];
-  p[a] = x * Math.cos(angle) - y * Math.sin(angle);
-  p[b] = x * Math.sin(angle) + y * Math.cos(angle);
-}
-
-function project5Dto3D(p) {
-  const scaleW = 1 / (2 - p[3]);
-  const scaleV = 1 / (2 - p[4]);
-  return new THREE.Vector3(
-    p[0] * scaleW * scaleV,
-    p[1] * scaleW * scaleV,
-    p[2] * scaleW * scaleV
-  );
-}
-
-/* =========================
-   GEOMETRY
-========================= */
-
-const material = new THREE.LineBasicMaterial({ color: 0x00ffff });
-let geometry = new THREE.BufferGeometry();
-let lineSegments = new THREE.LineSegments(geometry, material);
-scene.add(lineSegments);
-
-/* =========================
-   UI CONTROLS
-========================= */
-
-const sliders = {
-  xw: document.getElementById("xw"),
-  yw: document.getElementById("yw"),
-  wv: document.getElementById("wv")
+const player = {
+  x: 120,
+  y: () => canvas.height / 2,
+  r: 12
 };
 
-/* =========================
-   ANIMATION LOOP
-========================= */
-
-function animate() {
-  requestAnimationFrame(animate);
-
-  let points = vertices5D.map(v => {
-    let p = [...v];
-    rotate5D(p, 0, 3, sliders.xw.value);
-    rotate5D(p, 1, 3, sliders.yw.value);
-    rotate5D(p, 3, 4, sliders.wv.value);
-    return project5Dto3D(p);
-  });
-
-  let positions = [];
-  edges.forEach(([a, b]) => {
-    positions.push(...points[a].toArray());
-    positions.push(...points[b].toArray());
-  });
-
-  geometry.setAttribute(
-    'position',
-    new THREE.Float32BufferAttribute(positions, 3)
-  );
-
-  geometry.computeBoundingSphere();
-  renderer.render(scene, camera);
+/* ======================
+   INPUT (ONE BUTTON)
+====================== */
+function shiftDimension() {
+  if (!running) {
+    start();
+    return;
+  }
+  dimension = 1 - dimension;
+  flash = 1;
 }
 
-animate();
+addEventListener("keydown", e => e.code === "Space" && shiftDimension());
+addEventListener("mousedown", shiftDimension);
+addEventListener("touchstart", shiftDimension);
 
-window.addEventListener("resize", () => {
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-});
+/* ======================
+   GAME FLOW
+====================== */
+function start() {
+  running = true;
+  dimension = 0;
+  score = 0;
+  speed = 3;
+  spawnDelay = 80;
+  obstacles = [];
+  document.getElementById("center").innerHTML = "";
+}
+
+function die() {
+  running = false;
+  document.getElementById("center").innerHTML =
+    `💀<br>Score: ${Math.floor(score)}<br><small>Tap / Click / Space to restart</small>`;
+}
+
+/* ======================
+   OBSTACLES
+====================== */
+function spawnObstacle() {
+  obstacles.push({
+    x: canvas.width + 40,
+    y: Math.random() * (canvas.height - 120) + 60,
+    r: 14 + Math.random() * 6,
+    dim: Math.random() < 0.5 ? 0 : 1
+  });
+}
+
+/* ======================
+   MAIN LOOP
+====================== */
+function loop() {
+  requestAnimationFrame(loop);
+
+  // Background
+  ctx.fillStyle = dimension === 0 ? "#020b12" : "#12020c";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  if (flash > 0) {
+    ctx.fillStyle = "rgba(255,255,255,0.08)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    flash *= 0.85;
+  }
+
+  if (running) {
+    score += 0.06;
+    speed += 0.0007;
+    spawnDelay -= 0.01;
+
+    if (spawnDelay <= 0) {
+      spawnObstacle();
+      spawnDelay = Math.max(25, 90 - score * 0.4);
+    }
+
+    obstacles.forEach(o => o.x -= speed);
+    obstacles = obstacles.filter(o => o.x > -50);
+
+    // Collision detection
+    for (let o of obstacles) {
+      if (o.dim !== dimension) continue;
+      const dx = o.x - player.x;
+      const dy = o.y - player.y();
+      if (Math.hypot(dx, dy) < o.r + player.r) {
+        die();
+      }
+    }
+  }
+
+  // Draw obstacles
+  for (let o of obstacles) {
+    ctx.beginPath();
+    ctx.arc(o.x, o.y, o.r, 0, Math.PI * 2);
+    ctx.fillStyle = o.dim === 0 ? "#00f6ff" : "#ff2aa3";
+    ctx.globalAlpha = o.dim === dimension ? 1 : 0.15;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // Player
+  ctx.beginPath();
+  ctx.arc(player.x, player.y(), player.r, 0, Math.PI * 2);
+  ctx.fillStyle = dimension === 0 ? "#00f6ff" : "#ff2aa3";
+  ctx.fill();
+
+  // HUD
+  document.getElementById("score").textContent = Math.floor(score);
+  document.getElementById("dim").textContent = dimension === 0 ? "A" : "B";
+}
+
+loop();
 </script>
 
 </body>
