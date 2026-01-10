@@ -1,196 +1,532 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>DIMSHIFT</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-html, body {
-  margin: 0;
-  padding: 0;
-  background: #06060a;
-  overflow: hidden;
-  font-family: system-ui, monospace;
-  color: white;
-}
-canvas {
-  display: block;
-}
-#hud {
-  position: fixed;
-  top: 12px;
-  left: 12px;
-  font-size: 14px;
-  opacity: 0.85;
-}
-#center {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  pointer-events: none;
-  font-size: 24px;
-}
-small {
-  font-size: 14px;
-  opacity: 0.7;
-}
-</style>
-</head>
-<body>
+struct group_info init_groups = { .usage = ATOMIC_INIT(2) };
 
-<canvas id="c"></canvas>
+struct group_info *groups_alloc(int gidsetsize){
 
-<div id="hud">
-  Score: <span id="score">0</span><br>
-  Dimension: <span id="dim">A</span>
-</div>
+	struct group_info *group_info;
 
-<div id="center" id="msg"></div>
+	int nblocks;
 
-<script>
-/* ======================
-   CANVAS SETUP
-====================== */
-const canvas = document.getElementById("c");
-const ctx = canvas.getContext("2d");
+	int i;
 
-function resize() {
-  canvas.width = innerWidth;
-  canvas.height = innerHeight;
-}
-resize();
-addEventListener("resize", resize);
 
-/* ======================
-   GAME STATE
-====================== */
-let running = false;
-let dimension = 0; // 0 = A, 1 = B
-let score = 0;
-let speed = 3;
-let spawnDelay = 80;
-let obstacles = [];
-let flash = 0;
 
-const player = {
-  x: 120,
-  y: () => canvas.height / 2,
-  r: 12
-};
+	nblocks = (gidsetsize + NGROUPS_PER_BLOCK - 1) / NGROUPS_PER_BLOCK;
 
-/* ======================
-   INPUT (ONE BUTTON)
-====================== */
-function shiftDimension() {
-  if (!running) {
-    start();
-    return;
-  }
-  dimension = 1 - dimension;
-  flash = 1;
+	/* Make sure we always allocate at least one indirect block pointer */
+
+	nblocks = nblocks ? : 1;
+
+	group_info = kmalloc(sizeof(*group_info) + nblocks*sizeof(gid_t *), GFP_USER);
+
+	if (!group_info)
+
+		return NULL;
+
+	group_info->ngroups = gidsetsize;
+
+	group_info->nblocks = nblocks;
+
+	atomic_set(&group_info->usage, 1);
+
+
+
+	if (gidsetsize <= NGROUPS_SMALL)
+
+		group_info->blocks[0] = group_info->small_block;
+
+	else {
+
+		for (i = 0; i < nblocks; i++) {
+
+			gid_t *b;
+
+			b = (void *)__get_free_page(GFP_USER);
+
+			if (!b)
+
+				goto out_undo_partial_alloc;
+
+			group_info->blocks[i] = b;
+
+		}
+
+	}
+
+	return group_info;
+
+
+
+out_undo_partial_alloc:
+
+	while (--i >= 0) {
+
+		free_page((unsigned long)group_info->blocks[i]);
+
+	}
+
+	kfree(group_info);
+
+	return NULL;
+
 }
 
-addEventListener("keydown", e => e.code === "Space" && shiftDimension());
-addEventListener("mousedown", shiftDimension);
-addEventListener("touchstart", shiftDimension);
 
-/* ======================
-   GAME FLOW
-====================== */
-function start() {
-  running = true;
-  dimension = 0;
-  score = 0;
-  speed = 3;
-  spawnDelay = 80;
-  obstacles = [];
-  document.getElementById("center").innerHTML = "";
+
+EXPORT_SYMBOL(groups_alloc);
+
+
+
+void groups_free(struct group_info *group_info)
+
+{
+
+	if (group_info->blocks[0] != group_info->small_block) {
+
+		int i;
+
+		for (i = 0; i < group_info->nblocks; i++)
+
+			free_page((unsigned long)group_info->blocks[i]);
+
+	}
+
+	kfree(group_info);
+
 }
 
-function die() {
-  running = false;
-  document.getElementById("center").innerHTML =
-    `💀<br>Score: ${Math.floor(score)}<br><small>Tap / Click / Space to restart</small>`;
+
+
+EXPORT_SYMBOL(groups_free);
+
+
+
+/* export the group_info to a user-space array */
+
+static int groups_to_user(gid_t __user *grouplist,
+
+			  const struct group_info *group_info)
+
+{
+
+	int i;
+
+	unsigned int count = group_info->ngroups;
+
+
+
+	for (i = 0; i < group_info->nblocks; i++) {
+
+		unsigned int cp_count = min(NGROUPS_PER_BLOCK, count);
+
+		unsigned int len = cp_count * sizeof(*grouplist);
+
+
+
+		if (copy_to_user(grouplist, group_info->blocks[i], len))
+
+			return -EFAULT;
+
+
+
+		grouplist += NGROUPS_PER_BLOCK;
+
+		count -= cp_count;
+
+	}
+
+	return 0;
+
 }
 
-/* ======================
-   OBSTACLES
-====================== */
-function spawnObstacle() {
-  obstacles.push({
-    x: canvas.width + 40,
-    y: Math.random() * (canvas.height - 120) + 60,
-    r: 14 + Math.random() * 6,
-    dim: Math.random() < 0.5 ? 0 : 1
-  });
+
+
+/* fill a group_info from a user-space array - it must be allocated already */
+
+static int groups_from_user(struct group_info *group_info,
+
+    gid_t __user *grouplist)
+
+{
+
+	int i;
+
+	unsigned int count = group_info->ngroups;
+
+
+
+	for (i = 0; i < group_info->nblocks; i++) {
+
+		unsigned int cp_count = min(NGROUPS_PER_BLOCK, count);
+
+		unsigned int len = cp_count * sizeof(*grouplist);
+
+
+
+		if (copy_from_user(group_info->blocks[i], grouplist, len))
+
+			return -EFAULT;
+
+
+
+		grouplist += NGROUPS_PER_BLOCK;
+
+		count -= cp_count;
+
+	}
+
+	return 0;
+
 }
 
-/* ======================
-   MAIN LOOP
-====================== */
-function loop() {
-  requestAnimationFrame(loop);
 
-  // Background
-  ctx.fillStyle = dimension === 0 ? "#020b12" : "#12020c";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  if (flash > 0) {
-    ctx.fillStyle = "rgba(255,255,255,0.08)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    flash *= 0.85;
-  }
+/* a simple Shell sort */
 
-  if (running) {
-    score += 0.06;
-    speed += 0.0007;
-    spawnDelay -= 0.01;
+static void groups_sort(struct group_info *group_info)
 
-    if (spawnDelay <= 0) {
-      spawnObstacle();
-      spawnDelay = Math.max(25, 90 - score * 0.4);
-    }
+{
 
-    obstacles.forEach(o => o.x -= speed);
-    obstacles = obstacles.filter(o => o.x > -50);
+	int base, max, stride;
 
-    // Collision detection
-    for (let o of obstacles) {
-      if (o.dim !== dimension) continue;
-      const dx = o.x - player.x;
-      const dy = o.y - player.y();
-      if (Math.hypot(dx, dy) < o.r + player.r) {
-        die();
-      }
-    }
-  }
+	int gidsetsize = group_info->ngroups;
 
-  // Draw obstacles
-  for (let o of obstacles) {
-    ctx.beginPath();
-    ctx.arc(o.x, o.y, o.r, 0, Math.PI * 2);
-    ctx.fillStyle = o.dim === 0 ? "#00f6ff" : "#ff2aa3";
-    ctx.globalAlpha = o.dim === dimension ? 1 : 0.15;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-  }
 
-  // Player
-  ctx.beginPath();
-  ctx.arc(player.x, player.y(), player.r, 0, Math.PI * 2);
-  ctx.fillStyle = dimension === 0 ? "#00f6ff" : "#ff2aa3";
-  ctx.fill();
 
-  // HUD
-  document.getElementById("score").textContent = Math.floor(score);
-  document.getElementById("dim").textContent = dimension === 0 ? "A" : "B";
+	for (stride = 1; stride < gidsetsize; stride = 3 * stride + 1)
+
+		; /* nothing */
+
+	stride /= 3;
+
+
+
+	while (stride) {
+
+		max = gidsetsize - stride;
+
+		for (base = 0; base < max; base++) {
+
+			int left = base;
+
+			int right = left + stride;
+
+			gid_t tmp = GROUP_AT(group_info, right);
+
+
+
+			while (left >= 0 && GROUP_AT(group_info, left) > tmp) {
+
+				GROUP_AT(group_info, right) =
+
+				    GROUP_AT(group_info, left);
+
+				right = left;
+
+				left -= stride;
+
+			}
+
+			GROUP_AT(group_info, right) = tmp;
+
+		}
+
+		stride /= 3;
+
+	}
+
 }
 
-loop();
-</script>
 
-</body>
-</html>
+
+/* a simple bsearch */
+
+int groups_search(const struct group_info *group_info, gid_t grp)
+
+{
+
+	unsigned int left, right;
+
+
+
+	if (!group_info)
+
+		return 0;
+
+
+
+	left = 0;
+
+	right = group_info->ngroups;
+
+	while (left < right) {
+
+		unsigned int mid = left + (right - left)/2;
+
+		if (grp > GROUP_AT(group_info, mid))
+
+			left = mid + 1;
+
+		else if (grp < GROUP_AT(group_info, mid))
+
+			right = mid;
+
+		else
+
+			return 1;
+
+	}
+
+	return 0;
+
+}
+
+
+
+/**
+
+ * set_groups - Change a group subscription in a set of credentials
+
+ * @new: The newly prepared set of credentials to alter
+
+ * @group_info: The group list to install
+
+ *
+
+ * Validate a group subscription and, if valid, insert it into a set
+
+ * of credentials.
+
+ */
+
+int set_groups(struct cred *new, struct group_info *group_info)
+
+{
+
+	put_group_info(new->group_info);
+
+	groups_sort(group_info);
+
+	get_group_info(group_info);
+
+	new->group_info = group_info;
+
+	return 0;
+
+}
+
+
+
+EXPORT_SYMBOL(set_groups);
+
+
+
+/**
+
+ * set_current_groups - Change current's group subscription
+
+ * @group_info: The group list to impose
+
+ *
+
+ * Validate a group subscription and, if valid, impose it upon current's task
+
+ * security record.
+
+ */
+
+int set_current_groups(struct group_info *group_info)
+
+{
+
+	struct cred *new;
+
+	int ret;
+
+
+
+	new = prepare_creds();
+
+	if (!new)
+
+		return -ENOMEM;
+
+
+
+	ret = set_groups(new, group_info);
+
+	if (ret < 0) {
+
+		abort_creds(new);
+
+		return ret;
+
+	}
+
+
+
+	return commit_creds(new);
+
+}
+
+
+
+EXPORT_SYMBOL(set_current_groups);
+
+
+
+SYSCALL_DEFINE2(getgroups, int, gidsetsize, gid_t __user *, grouplist)
+
+{
+
+	const struct cred *cred = current_cred();
+
+	int i;
+
+
+
+	if (gidsetsize < 0)
+
+		return -EINVAL;
+
+
+
+	/* no need to grab task_lock here; it cannot change */
+
+	i = cred->group_info->ngroups;
+
+	if (gidsetsize) {
+
+		if (i > gidsetsize) {
+
+			i = -EINVAL;
+
+			goto out;
+
+		}
+
+		if (groups_to_user(grouplist, cred->group_info)) {
+
+			i = -EFAULT;
+
+			goto out;
+
+		}
+
+	}
+
+out:
+
+	return i;
+
+}
+
+
+
+/*
+
+ *	SMP: Our groups are copy-on-write. We can set them safely
+
+ *	without another task interfering.
+
+ */
+
+
+
+SYSCALL_DEFINE2(setgroups, int, gidsetsize, gid_t __user *, grouplist)
+
+{
+
+	struct group_info *group_info;
+
+	int retval;
+
+
+
+	if (!nsown_capable(CAP_SETGID))
+
+		return -EPERM;
+
+	if ((unsigned)gidsetsize > NGROUPS_MAX)
+
+		return -EINVAL;
+
+
+
+	group_info = groups_alloc(gidsetsize);
+
+	if (!group_info)
+
+		return -ENOMEM;
+
+	retval = groups_from_user(group_info, grouplist);
+
+	if (retval) {
+
+		put_group_info(group_info);
+
+		return retval;
+
+	}
+
+
+
+	retval = set_current_groups(group_info);
+
+	put_group_info(group_info);
+
+
+
+	return retval;
+
+}
+
+
+
+/*
+
+ * Check whether we're fsgid/egid or in the supplemental group..
+
+ */
+
+int in_group_p(gid_t grp)
+
+{
+
+	const struct cred *cred = current_cred();
+
+	int retval = 1;
+
+
+
+	if (grp != cred->fsgid)
+
+		retval = groups_search(cred->group_info, grp);
+
+	return retval;
+
+}
+
+
+
+EXPORT_SYMBOL(in_group_p);
+
+
+
+int in_egroup_p(gid_t grp)
+
+{
+
+	const struct cred *cred = current_cred();
+
+	int retval = 1;
+
+
+
+	if (grp != cred->egid)
+
+		retval = groups_search(cred->group_info, grp);
+
+	return retval;
+
+}
+|
