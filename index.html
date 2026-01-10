@@ -1,192 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>AI Chatbot</title>
-  <style>
-    body {
-      background: #0f172a;
-      color: #e2e8f0;
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      padding-top: 40px;
-    }
-    #chatbox {
-      width: 450px;
-      background: #1e293b;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.4);
-    }
-    #messages {
-      height: 320px;
-      overflow-y: auto;
-      border: 1px solid #334155;
-      padding: 10px;
-      border-radius: 6px;
-      margin-bottom: 10px;
-    }
-    .msg {
-      margin-bottom: 10px;
-      padding: 8px;
-      border-radius: 6px;
-      max-width: 90%;
-    }
-    .user {
-      background: #475569;
-      margin-left: auto;
-      text-align: right;
-    }
-    .bot {
-      background: #334155;
-      margin-right: auto;
-    }
-    #input-area {
-      display: flex;
-      gap: 8px;
-    }
-    input {
-      flex: 1;
-      padding: 8px;
-      border-radius: 6px;
-      border: none;
-      outline: none;
-    }
-    button {
-      padding: 8px 14px;
-      border: none;
-      background: #f97316;
-      color: #fff;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>5D_HYPER_SHAPE_SIM</title>
+    <style>
+        body { margin: 0; background: #020408; color: #00ffcc; font-family: 'Segoe UI', monospace; overflow: hidden; }
+        canvas { display: block; filter: drop-shadow(0 0 15px rgba(0, 255, 204, 0.4)); }
+        
+        #interface {
+            position: absolute; top: 20px; left: 20px;
+            background: rgba(10, 15, 25, 0.9);
+            border: 1px solid #00ffcc; padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
+            pointer-events: none;
+        }
+
+        .stat { margin-bottom: 10px; font-size: 13px; letter-spacing: 1px; }
+        .glitch { animation: scan 2s infinite; color: #ff0055; font-weight: bold; }
+        
+        @keyframes scan {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        #legal {
+            position: absolute; bottom: 15px; right: 20px;
+            font-size: 10px; color: #334;
+        }
+    </style>
 </head>
 <body>
 
-<div id="chatbox">
-  <div id="messages"></div>
+    <div id="interface">
+        <div class="stat">PROJECT_ID: PENTERACT_ALPHA</div>
+        <div class="stat">DIMENSIONS: 5 [X, Y, Z, W, V]</div>
+        <div class="stat">VERTICES: 32</div>
+        <div class="stat">EDGES: 80</div>
+        <div class="stat" id="coords">CALCULATING_MATRIX...</div>
+        <div class="glitch">LIVE_HYPER_ROTATION_ACTIVE</div>
+    </div>
 
-  <div id="input-area">
-    <input id="userInput" placeholder="Say something...">
-    <button onclick="sendMessage()">Send</button>
-  </div>
-</div>
+    <div id="legal">SOURCE PROTECTED BY BINGKAHU ENCRYPTION // NO PERMISSION TO DOWNLOAD</div>
+    <canvas id="render"></canvas>
 
 <script>
-    
-  const messages = document.getElementById("messages");
+/**
+ * 5D TESSERACT SIMULATOR
+ * A pure math approach to 5-dimensional spatial rotation.
+ */
 
-  // Personality-driven responses
-  const botReplies = [
-    "That's an intriguing thought.",
-    "You’ve got a creative mind.",
-    "I didn’t expect that answer.",
-    "Tell me more — I’m curious now.",
-    "Interesting perspective you’ve got there.",
-    "You’re full of ideas today.",
-    "That actually made me think.",
-    "I like where you're going with this.",
-    "Your message just sparked a new idea in me."
-  ];
+const Sim = {
+    canvas: document.getElementById('render'),
+    ctx: null,
+    points: [], 
+    angle: 0,
 
-  function addMessage(text, sender) {
-    const div = document.createElement("div");
-    div.className = "msg " + sender;
-    div.textContent = text;
-    messages.appendChild(div);
-    messages.scrollTop = messages.scrollHeight;
-  }
+    init() {
+        this.ctx = this.canvas.getContext('2d');
+        this.resize();
+        window.onresize = () => this.resize();
+        
+        // Build 5D Cube Vertices (2^5 = 32 points)
+        for (let i = 0; i < 32; i++) {
+            this.points.push([
+                i & 1 ? 1 : -1,
+                i & 2 ? 1 : -1,
+                i & 4 ? 1 : -1,
+                i & 8 ? 1 : -1,
+                i & 16 ? 1 : -1
+            ]);
+        }
+        
+        this.animate();
+    },
 
-  function sendMessage() {
-    const input = document.getElementById("userInput");
-    const text = input.value.trim();
-    if (!text) return;
+    resize() {
+        this.W = this.canvas.width = window.innerWidth;
+        this.H = this.canvas.height = window.innerHeight;
+    },
 
-    addMessage(text, "user");
-    input.value = "";
+    // Matrix Rotation for N-Dimensional Space
+    rotate(p, a) {
+        let rotated = [...p];
 
-    // Random AI-style reply
-    const reply = botReplies[Math.floor(Math.random() * botReplies.length)];
+        // Rotate in the XV Plane (1st and 5th dimension)
+        let x = rotated[0] * Math.cos(a) - rotated[4] * Math.sin(a);
+        let v = rotated[0] * Math.sin(a) + rotated[4] * Math.cos(a);
+        rotated[0] = x; rotated[4] = v;
 
-    setTimeout(() => {
-      addMessage(reply, "bot");
-    }, 400);
-  }
+        // Rotate in the YW Plane (2nd and 4th dimension)
+        let y = rotated[1] * Math.cos(a * 0.7) - rotated[3] * Math.sin(a * 0.7);
+        let w = rotated[1] * Math.sin(a * 0.7) + rotated[3] * Math.cos(a * 0.7);
+        rotated[1] = y; rotated[3] = w;
+
+        // Rotate in the ZV Plane (3rd and 5th dimension)
+        let z = rotated[2] * Math.cos(a * 0.3) - rotated[4] * Math.sin(a * 0.3);
+        rotated[2] = z; rotated[4] = rotated[2] * Math.sin(a * 0.3) + rotated[4] * Math.cos(a * 0.3);
+
+        return rotated;
+    },
+
+    project(p) {
+        // Higher dimensions require perspective division at every step
+        // 5D -> 4D
+        let d5 = 1 / (3 - p[4]);
+        let p4 = [p[0] * d5, p[1] * d5, p[2] * d5, p[3] * d5];
+
+        // 4D -> 3D
+        let d4 = 1 / (2 - p4[3]);
+        let p3 = [p4[0] * d4, p4[1] * d4, p4[2] * d4];
+
+        // 3D -> 2D (Standard Screen projection)
+        let d3 = 1 / (1.5 - p3[2]);
+        return {
+            x: p3[0] * d3 * 500 + this.W / 2,
+            y: p3[1] * d3 * 500 + this.H / 2,
+            z: p3[2] // Used for depth coloring
+        };
+    },
+
+    animate() {
+        this.ctx.fillStyle = '#020408';
+        this.ctx.fillRect(0, 0, this.W, this.H);
+
+        const transformed = this.points.map(p => {
+            return this.project(this.rotate(p, this.angle));
+        });
+
+        // Draw edges
+        this.ctx.lineWidth = 1.5;
+        for (let i = 0; i < transformed.length; i++) {
+            for (let j = i + 1; j < transformed.length; j++) {
+                // Connect points that differ by only 1 bit (adjacent in 5D)
+                let distance = 0;
+                let val = i ^ j;
+                while (val > 0) {
+                    if (val & 1) distance++;
+                    val >>= 1;
+                }
+
+                if (distance === 1) {
+                    const depth = (transformed[i].z + transformed[j].z) + 2;
+                    this.ctx.strokeStyle = `hsla(170, 100%, 50%, ${depth * 0.3})`;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(transformed[i].x, transformed[i].y);
+                    this.ctx.lineTo(transformed[j].x, transformed[j].y);
+                    this.ctx.stroke();
+                }
+            }
+        }
+
+        this.angle += 0.015;
+        document.getElementById('coords').innerText = `V_AXIS_ROT: ${this.angle.toFixed(4)}`;
+        requestAnimationFrame(() => this.animate());
+    }
+};
+
+window.onload = () => Sim.init();
 </script>
-
 </body>
 </html>
-<script>
-  const messages = document.getElementById("messages");
-
-  // Load memory from localStorage
-  let memory = JSON.parse(localStorage.getItem("chatMemory") || "[]");
-
-  // Bot personality lines
-  const botReplies = [
-    "That's an intriguing thought.",
-    "You’ve got a creative mind.",
-    "I didn’t expect that answer.",
-    "Tell me more — I’m curious now.",
-    "Interesting perspective you’ve got there.",
-    "You’re full of ideas today.",
-    "That actually made me think.",
-    "I like where you're going with this.",
-    "Your message just sparked a new idea in me."
-  ];
-
-  function addMessage(text, sender) {
-    const div = document.createElement("div");
-    div.className = "msg " + sender;
-    div.textContent = text;
-    messages.appendChild(div);
-    messages.scrollTop = messages.scrollHeight;
-  }
-
-  function saveMemory() {
-    // Keep memory small
-    if (memory.length > 20) memory = memory.slice(-20);
-    localStorage.setItem("chatMemory", JSON.stringify(memory));
-  }
-
-  function generateReply(userText) {
-    // Add new memory
-    memory.push(userText);
-    saveMemory();
-
-    // Sometimes reference memory
-    const shouldReferenceMemory = Math.random() < 0.4 && memory.length > 1;
-
-    if (shouldReferenceMemory) {
-      const past = memory[Math.floor(Math.random() * (memory.length - 1))];
-      return `You mentioned "${past}" earlier — how does that connect to this?`;
-    }
-
-    // Otherwise pick a personality line
-    return botReplies[Math.floor(Math.random() * botReplies.length)];
-  }
-
-  function sendMessage() {
-    const input = document.getElementById("userInput");
-    const text = input.value.trim();
-    if (!text) return;
-
-    addMessage(text, "user");
-    input.value = "";
-
-    const reply = generateReply(text);
-
-    setTimeout(() => {
-      addMessage(reply, "bot");
-    }, 400);
-  }
-
-  // Load memory into chat visually when page opens
-  window.onload = () => {
-    if (memory.length > 0) {
-      addMessage("Welcome back. I remember some of our past chats.", "bot");
-    }
-  };
-</script>
