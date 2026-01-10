@@ -1,196 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>DIMSHIFT</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-html, body {
-  margin: 0;
-  padding: 0;
-  background: #06060a;
-  overflow: hidden;
-  font-family: system-ui, monospace;
-  color: white;
-}
-canvas {
-  display: block;
-}
-#hud {
-  position: fixed;
-  top: 12px;
-  left: 12px;
-  font-size: 14px;
-  opacity: 0.85;
-}
-#center {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  pointer-events: none;
-  font-size: 24px;
-}
-small {
-  font-size: 14px;
-  opacity: 0.7;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEURAL NEXUS: 11th DIMENSION</title>
+    <style>
+        :root {
+            --neon-cyan: #00f3ff;
+            --neural-pink: #ff007b;
+            --void: #020205;
+            --glass: rgba(0, 243, 255, 0.1);
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            background: var(--void);
+            color: var(--neon-cyan);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* 11D Command Center UI */
+        #hud-container {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .panel {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--neon-cyan);
+            margin: 20px;
+            padding: 20px;
+            pointer-events: all;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+        }
+
+        .alchemy-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .element {
+            border: 1px solid var(--neural-pink);
+            padding: 5px;
+            font-size: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .element:hover { background: var(--neural-pink); color: white; }
+
+        #nexus-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            z-index: 1;
+        }
+
+        .stats-box { font-family: 'Courier New', monospace; font-size: 12px; }
+
+        .glitch-title {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2rem;
+            letter-spacing: 10px;
+            text-shadow: 2px 2px var(--neural-pink);
+            opacity: 0.8;
+        }
+    </style>
 </head>
 <body>
 
-<canvas id="c"></canvas>
+<canvas id="nexus-canvas"></canvas>
 
-<div id="hud">
-  Score: <span id="score">0</span><br>
-  Dimension: <span id="dim">A</span>
+<div id="hud-container">
+    <div class="panel">
+        <h3>ALCHEMY ENGINE</h3>
+        <p class="stats-box">ACTIVE ELEMENTS: <span id="element-count">0</span>/118</p>
+        <div class="alchemy-grid" id="element-bank">
+            </div>
+        <button style="width:100%; margin-top:10px; background:none; border: 1px solid var(--neon-cyan); color: white; padding: 10px; cursor: pointer;" onclick="fuseElements()">FUSE DIMENSIONS</button>
+    </div>
+
+    <div></div>
+
+    <div class="panel">
+        <h3>NEURAL EVOLUTION</h3>
+        <div class="stats-box">
+            <p>VELOCITY: <span id="stat-vel">0.00</span>c</p>
+            <p>LORENTZ FACTOR: <span id="stat-lorentz">1.00</span></p>
+            <p>DIMENSION DEPTH: 11D</p>
+            <hr border="0.5px solid var(--neon-cyan)">
+            <p style="color: var(--neural-pink)">FACTION: THE VOID-WALKERS</p>
+        </div>
+    </div>
 </div>
 
-<div id="center" id="msg"></div>
+<div class="glitch-title">NEURAL NEXUS</div>
 
 <script>
-/* ======================
-   CANVAS SETUP
-====================== */
-const canvas = document.getElementById("c");
-const ctx = canvas.getContext("2d");
+    const canvas = document.getElementById('nexus-canvas');
+    const ctx = canvas.getContext('2d');
+    let w, h;
 
-function resize() {
-  canvas.width = innerWidth;
-  canvas.height = innerHeight;
-}
-resize();
-addEventListener("resize", resize);
+    // --- 1. PROJECTION ENGINE (The "Look") ---
+    function initCanvas() {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', initCanvas);
+    initCanvas();
 
-/* ======================
-   GAME STATE
-====================== */
-let running = false;
-let dimension = 0; // 0 = A, 1 = B
-let score = 0;
-let speed = 3;
-let spawnDelay = 80;
-let obstacles = [];
-let flash = 0;
-
-const player = {
-  x: 120,
-  y: () => canvas.height / 2,
-  r: 12
-};
-
-/* ======================
-   INPUT (ONE BUTTON)
-====================== */
-function shiftDimension() {
-  if (!running) {
-    start();
-    return;
-  }
-  dimension = 1 - dimension;
-  flash = 1;
-}
-
-addEventListener("keydown", e => e.code === "Space" && shiftDimension());
-addEventListener("mousedown", shiftDimension);
-addEventListener("touchstart", shiftDimension);
-
-/* ======================
-   GAME FLOW
-====================== */
-function start() {
-  running = true;
-  dimension = 0;
-  score = 0;
-  speed = 3;
-  spawnDelay = 80;
-  obstacles = [];
-  document.getElementById("center").innerHTML = "";
-}
-
-function die() {
-  running = false;
-  document.getElementById("center").innerHTML =
-    `💀<br>Score: ${Math.floor(score)}<br><small>Tap / Click / Space to restart</small>`;
-}
-
-/* ======================
-   OBSTACLES
-====================== */
-function spawnObstacle() {
-  obstacles.push({
-    x: canvas.width + 40,
-    y: Math.random() * (canvas.height - 120) + 60,
-    r: 14 + Math.random() * 6,
-    dim: Math.random() < 0.5 ? 0 : 1
-  });
-}
-
-/* ======================
-   MAIN LOOP
-====================== */
-function loop() {
-  requestAnimationFrame(loop);
-
-  // Background
-  ctx.fillStyle = dimension === 0 ? "#020b12" : "#12020c";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  if (flash > 0) {
-    ctx.fillStyle = "rgba(255,255,255,0.08)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    flash *= 0.85;
-  }
-
-  if (running) {
-    score += 0.06;
-    speed += 0.0007;
-    spawnDelay -= 0.01;
-
-    if (spawnDelay <= 0) {
-      spawnObstacle();
-      spawnDelay = Math.max(25, 90 - score * 0.4);
+    class HyperParticle {
+        constructor() {
+            this.reset();
+        }
+        reset() {
+            this.x = Math.random() * w;
+            this.y = Math.random() * h;
+            this.z = Math.random() * w; // Depth dimension
+            this.size = Math.random() * 2;
+            this.speed = Math.random() * 2 + 0.5;
+        }
+        update(lorentz) {
+            this.z -= this.speed * lorentz;
+            if (this.z <= 0) this.reset();
+        }
+        draw() {
+            // Perspective Projection (3D to 2D but simulated 11D folding)
+            const scale = 400 / (400 + this.z);
+            const x2d = (this.x - w / 2) * scale + w / 2;
+            const y2d = (this.y - h / 2) * scale + h / 2;
+            
+            ctx.fillStyle = `rgba(0, 243, 255, ${scale})`;
+            ctx.fillRect(x2d, y2d, this.size * scale, this.size * scale);
+        }
     }
 
-    obstacles.forEach(o => o.x -= speed);
-    obstacles = obstacles.filter(o => o.x > -50);
+    const particles = Array.from({length: 300}, () => new HyperParticle());
 
-    // Collision detection
-    for (let o of obstacles) {
-      if (o.dim !== dimension) continue;
-      const dx = o.x - player.x;
-      const dy = o.y - player.y();
-      if (Math.hypot(dx, dy) < o.r + player.r) {
-        die();
-      }
+    // --- 2. ALCHEMY ENGINE DATA ---
+    const elementList = ['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Au', 'U'];
+    const bank = document.getElementById('element-bank');
+    elementList.forEach(el => {
+        const div = document.createElement('div');
+        div.className = 'element';
+        div.innerText = el;
+        div.onclick = () => { div.style.borderColor = 'white'; document.getElementById('element-count').innerText = "2"; };
+        bank.appendChild(div);
+    });
+
+    // --- 3. PHYSICS & EVOLUTION ---
+    let velocity = 0;
+    let lorentzFactor = 1;
+
+    function calculateLorentz(v) {
+        // Simple Lorentz Transformation: γ = 1 / sqrt(1 - v^2)
+        // Using 0.99 as speed of light limit for game physics
+        return 1 / Math.sqrt(1 - Math.pow(Math.min(v, 0.99), 2));
     }
-  }
 
-  // Draw obstacles
-  for (let o of obstacles) {
-    ctx.beginPath();
-    ctx.arc(o.x, o.y, o.r, 0, Math.PI * 2);
-    ctx.fillStyle = o.dim === 0 ? "#00f6ff" : "#ff2aa3";
-    ctx.globalAlpha = o.dim === dimension ? 1 : 0.15;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-  }
+    function fuseElements() {
+        // Visual trigger for "Fusing"
+        velocity += 0.1;
+        if (velocity > 0.9) velocity = 0; // Reset or "Collapse"
+        
+        document.body.style.backgroundColor = 'white';
+        setTimeout(() => { document.body.style.backgroundColor = 'var(--void)'; }, 50);
+    }
 
-  // Player
-  ctx.beginPath();
-  ctx.arc(player.x, player.y(), player.r, 0, Math.PI * 2);
-  ctx.fillStyle = dimension === 0 ? "#00f6ff" : "#ff2aa3";
-  ctx.fill();
+    // --- 4. THE GAME LOOP ---
+    function loop() {
+        ctx.fillStyle = 'rgba(2, 2, 5, 0.2)'; // Motion blur trail
+        ctx.fillRect(0, 0, w, h);
 
-  // HUD
-  document.getElementById("score").textContent = Math.floor(score);
-  document.getElementById("dim").textContent = dimension === 0 ? "A" : "B";
-}
+        lorentzFactor = calculateLorentz(velocity);
+        
+        // Update UI
+        document.getElementById('stat-vel').innerText = velocity.toFixed(2);
+        document.getElementById('stat-lorentz').innerText = lorentzFactor.toFixed(2);
 
-loop();
+        // Render Geometry
+        particles.forEach(p => {
+            p.update(lorentzFactor);
+            p.draw();
+        });
+
+        requestAnimationFrame(loop);
+    }
+
+    loop();
 </script>
-
 </body>
 </html>
