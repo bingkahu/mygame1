@@ -1,352 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Sanic the Porcupine – Retro Hard Edition</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: #020617;
-    color: #e5e7eb;
-    font-family: system-ui, sans-serif;
-    display: flex; align-items: center; justify-content: center;
-    height: 100vh;
-  }
-  .wrapper { text-align: center; }
-  #game {
-    border: 4px solid #111827;
-    border-radius: 6px;
-    background: #1d4ed8;
-    image-rendering: pixelated;
-    box-shadow: 0 0 24px rgba(15,23,42,0.8);
-  }
-  #hud {
-    margin-top: 8px;
-    display: flex; justify-content: space-between;
-    max-width: 512px; font-size: 13px;
-  }
-  #score, #lives { font-weight: 600; color: #e5e7eb; }
-  #status { margin-top: 6px; font-size: 12px; color: #fbbf24; }
-  .btn {
-    background: #4f46e5; color: #e5e7eb;
-    padding: 6px 12px; border-radius: 999px;
-    border: none; cursor: pointer;
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SANIC THE PORCUPINE: GITHUB EDITION</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #005bc5; font-family: 'Comic Sans MS', cursive; }
+        #game-canvas { display: block; background: linear-gradient(#87CEEB, #228B22); }
+        #ui {
+            position: absolute; top: 10px; left: 10px; color: yellow;
+            font-size: 24px; text-shadow: 2px 2px black; pointer-events: none;
+        }
+        .controls {
+            position: absolute; bottom: 20px; width: 100%; text-align: center;
+            color: white; font-size: 12px; opacity: 0.5;
+        }
+    </style>
 </head>
 <body>
-<div class="wrapper">
-  <h1>Sanic the Porcupine</h1>
-  <p>Move with A/D, jump with Space or ↑. Stomp enemies.</p>
 
-  <canvas id="game" width="512" height="288"></canvas>
-
-  <div id="hud">
-    <div>Score: <span id="score">0</span></div>
-    <div>Lives: <span id="lives">3</span></div>
-    <button id="restart" class="btn">Restart</button>
-  </div>
-
-  <div id="status">Press A/D/Space/↑ to start.</div>
-</div>
+<div id="ui">RINGS: <span id="ring-count">0</span><br>SPEED: <span id="speed-val">0</span></div>
+<canvas id="game-canvas"></canvas>
+<div class="controls">ARROWS TO MOVE | SPACE TO SPINDASH | GOTTA GO FAST</div>
 
 <script>
-(() => {
-"use strict";
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const ringEl = document.getElementById('ring-count');
+    const speedEl = document.getElementById('speed-val');
 
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-const scoreEl = document.getElementById("score");
-const livesEl = document.getElementById("lives");
-const restartBtn = document.getElementById("restart");
-const statusEl = document.getElementById("status");
+    let rings = 0;
+    const keys = {};
 
-const W = canvas.width;
-const H = canvas.height;
-const GROUND = 40;
+    const sanic = {
+        x: 100, y: canvas.height - 150,
+        vx: 0, vy: 0,
+        width: 80, height: 80,
+        speed: 0.8, friction: 0.95, gravity: 0.6,
+        jumpPower: -15, grounded: false
+    };
 
-let keys = { left: false, right: false, jump: false };
-let running = false;
-let gameOver = false;
-let lastTime = 0;
-let score = 0;
-let lives = 3;
-let cameraX = 0;
+    window.addEventListener('keydown', e => keys[e.code] = true);
+    window.addEventListener('keyup', e => keys[e.code] = false);
 
-let player = {
-  x: 40, y: H - GROUND - 24,
-  w: 24, h: 24,
-  vx: 0, vy: 0,
-  onGround: false,
-  facing: 1,
-  frame: 0, frameTimer: 0
-};
+    function drawSanic() {
+        // The "Sanic" Look: Blue circle with messy spikes
+        ctx.save();
+        ctx.translate(sanic.x + sanic.width/2, sanic.y + sanic.height/2);
+        
+        // Rotation based on speed
+        ctx.rotate(sanic.vx * 0.1);
 
-let platforms = [];
-let enemies = [];
+        // Body
+        ctx.fillStyle = '#0000ff';
+        ctx.beginPath();
+        ctx.arc(0, 0, 35, 0, Math.PI * 2);
+        ctx.fill();
 
-const LEVELS = [
-  {
-    length: 1200,
-    platforms: [
-      [0, H-GROUND, 1200, GROUND],
-      [180, H-90, 100, 14],
-      [360, H-140, 120, 14],
-      [580, H-110, 100, 14],
-      [760, H-160, 140, 14]
-    ],
-    enemies: [
-      [220, H-90-20, 60, 1],
-      [380, H-140-20, -70, 2],
-      [620, H-110-20, 60, 3]
-    ]
-  },
-  {
-    length: 1500,
-    platforms: [
-      [0, H-GROUND, 1500, GROUND],
-      [200, H-80, 120, 14],
-      [380, H-140, 140, 14],
-      [620, H-100, 100, 14],
-      [820, H-160, 140, 14],
-      [1100, H-130, 120, 14]
-    ],
-    enemies: [
-      [250, H-80-20, 70, 1],
-      [400, H-140-20, -80, 2],
-      [900, H-160-20, 90, 4],
-      [1140, H-130-20, -70, 5]
-    ]
-  },
-  {
-    length: 1800,
-    platforms: [
-      [0, H-GROUND, 1800, GROUND],
-      [180, H-90, 100, 14],
-      [360, H-140, 120, 14],
-      [580, H-110, 100, 14],
-      [760, H-160, 140, 14],
-      [1000, H-130, 120, 14],
-      [1300, H-150, 140, 14]
-    ],
-    enemies: [
-      [220, H-90-20, 80, 1],
-      [380, H-140-20, -90, 2],
-      [620, H-110-20, 80, 3],
-      [780, H-160-20, -100, 4],
-      [1040, H-130-20, 90, 5],
-      [1340, H-150-20, -110, 6]
-    ]
-  }
-];
+        // Messy Spikes
+        ctx.strokeStyle = '#0000ff';
+        ctx.lineWidth = 8;
+        for(let i=0; i<5; i++) {
+            ctx.beginPath();
+            ctx.moveTo(-30, -10 + (i*10));
+            ctx.lineTo(-50, -20 + (i*15));
+            ctx.stroke();
+        }
 
-let currentLevel = 0;
+        // Eyes (Derpy Sanic Style)
+        ctx.fillStyle = 'white';
+        ctx.beginPath(); ctx.arc(-10, -10, 10, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(15, -10, 10, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = 'black';
+        ctx.beginPath(); ctx.arc(-8, -8, 3, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(17, -8, 3, 0, Math.PI*2); ctx.fill();
 
-function loadLevel(i) {
-  const L = LEVELS[i];
-  platforms = L.platforms.map(p => ({ x:p[0], y:p[1], w:p[2], h:p[3] }));
-  enemies = L.enemies.map(e => ({
-    x:e[0], y:e[1], w:20, h:20,
-    vx:e[2], alive:true, platformIndex:e[3]
-  }));
-}
-
-function resetGame() {
-  loadLevel(currentLevel);
-  player.x = 40;
-  player.y = H - GROUND - player.h;
-  player.vx = 0;
-  player.vy = 0;
-  player.onGround = false;
-  cameraX = 0;
-  running = false;
-  gameOver = false;
-  lastTime = 0;
-  score = 0;
-  scoreEl.textContent = "0";
-  livesEl.textContent = lives;
-  statusEl.textContent = "Press A/D/Space/↑ to start.";
-}
-
-function collide(a,b){
-  return a.x < b.x+b.w && a.x+a.w > b.x &&
-         a.y < b.y+b.h && a.y+a.h > b.y;
-}
-
-function update(dt){
-  if(!running) return;
-
-  const MOVE = 220;
-  const JUMP = 400;
-  const GRAV = 900;
-
-  let targetVX = 0;
-  if(keys.left) targetVX -= MOVE;
-  if(keys.right) targetVX += MOVE;
-
-  player.vx = targetVX;
-  if(targetVX !== 0) player.facing = targetVX > 0 ? 1 : -1;
-
-  if(keys.jump && player.onGround){
-    player.vy = -JUMP;
-    player.onGround = false;
-  }
-
-  player.vy += GRAV * dt;
-
-  player.x += player.vx * dt;
-  player.onGround = false;
-
-  for(const p of platforms){
-    if(collide(player,p)){
-      if(player.vx > 0) player.x = p.x - player.w;
-      else if(player.vx < 0) player.x = p.x + p.w;
-      player.vx = 0;
+        ctx.restore();
     }
-  }
 
-  player.y += player.vy * dt;
+    function update() {
+        // Movement Logic
+        if (keys['ArrowRight']) sanic.vx += sanic.speed;
+        if (keys['ArrowLeft']) sanic.vx -= sanic.speed;
+        if (keys['Space'] && sanic.grounded) {
+            sanic.vy = sanic.jumpPower;
+            sanic.grounded = false;
+        }
 
-  for(const p of platforms){
-    if(collide(player,p)){
-      if(player.vy > 0){
-        player.y = p.y - player.h;
-        player.vy = 0;
-        player.onGround = true;
-      } else if(player.vy < 0){
-        player.y = p.y + p.h;
-        player.vy = 0;
-      }
+        // Physics
+        sanic.vx *= sanic.friction;
+        sanic.vy += sanic.gravity;
+        sanic.x += sanic.vx;
+        sanic.y += sanic.vy;
+
+        // Ground Collision
+        if (sanic.y + sanic.height > canvas.height - 50) {
+            sanic.y = canvas.height - 50 - sanic.height;
+            sanic.vy = 0;
+            sanic.grounded = true;
+        }
+
+        // Screen Wrap
+        if (sanic.x > canvas.width) sanic.x = -sanic.width;
+        if (sanic.x < -sanic.width) sanic.x = canvas.width;
+
+        // Score logic based on speed
+        if (Math.abs(sanic.vx) > 15) {
+            rings++;
+            ringEl.innerText = Math.floor(rings / 10);
+        }
+        speedEl.innerText = Math.abs(sanic.vx).toFixed(1);
     }
-  }
 
-  const LEND = LEVELS[currentLevel].length - 150;
-  cameraX = Math.max(0, Math.min(player.x - 120, LEND));
+    function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw Floor
+        ctx.fillStyle = '#32CD32';
+        ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
 
-  for(const e of enemies){
-    if(!e.alive) continue;
-    e.x += e.vx * dt;
-
-    const p = platforms[e.platformIndex];
-    if(e.x < p.x){ e.x = p.x; e.vx = Math.abs(e.vx); }
-    if(e.x+e.w > p.x+p.w){ e.x = p.x+p.w-e.w; e.vx = -Math.abs(e.vx); }
-
-    if(collide(player,e)){
-      if(player.vy > 0 && player.y+player.h <= e.y+6){
-        e.alive = false;
-        player.vy = -JUMP*0.6;
-        score += 100;
-      } else {
-        loseLife();
-        return;
-      }
+        update();
+        drawSanic();
+        requestAnimationFrame(loop);
     }
-  }
 
-  score += dt*20;
-  scoreEl.textContent = Math.floor(score);
-
-  if(player.y > H+50){
-    loseLife();
-    return;
-  }
-
-  if(player.x > LEND){
-    nextLevel();
-  }
-}
-
-function loseLife(){
-  lives--;
-  livesEl.textContent = lives;
-  if(lives <= 0){
-    gameOver = true;
-    running = false;
-    statusEl.textContent = "Game Over! Score: "+Math.floor(score);
-    return;
-  }
-  statusEl.textContent = "You lost a life!";
-  running = false;
-  setTimeout(()=>{ resetGame(); running=true; statusEl.textContent=""; },1000);
-}
-
-function nextLevel(){
-  currentLevel++;
-  if(currentLevel >= LEVELS.length){
-    statusEl.textContent = "You beat all levels!";
-    running = false;
-    gameOver = true;
-    return;
-  }
-  statusEl.textContent = "Level Complete!";
-  running = false;
-  setTimeout(()=>{ resetGame(); running=true; statusEl.textContent=""; },1000);
-}
-
-function draw(){
-  ctx.fillStyle="#1d4ed8";
-  ctx.fillRect(0,0,W,H);
-
-  for(const p of platforms){
-    const x = Math.round(p.x - cameraX);
-    ctx.fillStyle="#16a34a";
-    ctx.fillRect(x,p.y,p.w,p.h);
-  }
-
-  for(const e of enemies){
-    if(!e.alive) continue;
-    const x = Math.round(e.x - cameraX);
-    ctx.fillStyle="#dc2626";
-    ctx.fillRect(x,e.y,e.w,e.h);
-  }
-
-  const px = Math.round(player.x - cameraX);
-  ctx.fillStyle="#2563eb";
-  ctx.fillRect(px,player.y,player.w,player.h);
-}
-
-function loop(t){
-  if(!lastTime) lastTime = t;
-  const dt = Math.min((t-lastTime)/1000,0.03);
-  lastTime = t;
-
-  if(running && !gameOver) update(dt);
-  draw();
-  requestAnimationFrame(loop);
-}
-
-window.addEventListener("keydown",e=>{
-  if(e.key==="a"||e.key==="A") keys.left=true;
-  if(e.key==="d"||e.key==="D") keys.right=true;
-  if(e.key===" "||e.key==="ArrowUp") keys.jump=true;
-
-  if(!running && !gameOver){
-    running = true;
-    statusEl.textContent = "";
-  } else if(gameOver){
-    currentLevel = 0;
-    lives = 3;
-    resetGame();
-  }
-});
-
-window.addEventListener("keyup",e=>{
-  if(e.key==="a"||e.key==="A") keys.left=false;
-  if(e.key==="d"||e.key==="D") keys.right=false;
-  if(e.key===" "||e.key==="ArrowUp") keys.jump=false;
-});
-
-restartBtn.onclick = ()=>{
-  currentLevel = 0;
-  lives = 3;
-  resetGame();
-};
-
-resetGame();
-requestAnimationFrame(loop);
-
-})();
+    loop();
 </script>
 </body>
 </html>
