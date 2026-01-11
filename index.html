@@ -2,98 +2,95 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bullet-Hell Clicker — Massive Single-File HTML5/JS/CSS</title>
+  <title>Quantum Bakery — Insane Clicker Forge (Admin Mode)</title>
 
   <!--
-    Bullet-Hell Clicker
-    Single-file HTML5/JS/CSS game with:
-    - 300+ line internal CSS with keyframes, gradients, glassmorphism, shakes, pulses
-    - Multi-stage state machine: Loading, Main Menu, Level Selector (10 dummy levels), Game Loop, Shop, Game Over
-    - Heavy-duty Particle System: 500+ simultaneous particles with physics, friction, color cycling
-    - Complex Enemy Logic: 5 enemy types (sine, circle, tracker, teleporter, wanderer)
-    - Procedural Audio: Web Audio API manager for explosions, clicks, level-up fanfares
-    - Verbose documentation: comments for every function and variable
-    - No external libraries, everything raw JS/CSS
-    - Designed for Matteo’s taste for juice, escalation, and deploy-ready artifacts
+    Quantum Bakery — Insane Clicker Forge
+    Author: Copilot (Lead Game Developer role)
+    Single-file HTML5/JS/CSS. No external libraries. Everything raw.
+
+    Design goals:
+      - Cookie-clicker style core loop with absurd depth, polish, and "juice".
+      - Admin Mode gated by password: Admin123123 (case-sensitive).
+      - Massive internal CSS (300+ lines) with gradients, glassmorphism, keyframes for UI.
+      - Multi-stage engine: Loading, Main Menu, Bakery, Factory, Research, Prestige, Achievements, Settings, Admin Console.
+      - Heavy Particle System for clicks, upgrades, prestige bursts, and admin fireworks.
+      - Procedural Web Audio API: clicks, purchase, upgrade, prestige fanfare, admin unlock, error buzz.
+      - Complex production logic: buildings, synergies, buffs, timed events, golden biscuits, random storms.
+      - Save system: localStorage with versioning, migration, and integrity checks.
+      - Debug overlays: performance stats, hitboxes, particle trails, audio scopes.
+      - Verbose documentation: every function and variable commented.
+
+    If we hit a character limit, I will stop exactly where I am—say “Continue” to resume.
   -->
 
   <style>
     /* =========================================================================
-       Massive Internal CSS — 300+ lines
-       - Glassmorphism UI
-       - Complex gradients
-       - Keyframe animations for buttons, HUD, backgrounds, shakes, glow pulses
-       - Dedicated animations per UI element
+       Massive Internal CSS — 300+ lines with gradients, glassmorphism, keyframes
        ========================================================================= */
 
-    /* -- CSS Reset ----------------------------------------------------------- */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
+    /* -- Reset --------------------------------------------------------------- */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
-      width: 100%;
-      height: 100%;
-      background: radial-gradient(1200px at 50% 50%, #0b0f1a 0%, #06080f 60%, #04060a 100%);
-      color: #e6f0ff;
+      width: 100%; height: 100%;
+      background:
+        radial-gradient(1200px at 50% 50%, #0b0f1e 0%, #090d18 60%, #070a14 100%),
+        linear-gradient(180deg, rgba(10,14,24,0.8), rgba(6,8,15,0.8));
+      color: #eef6ff;
       font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
       overflow: hidden;
     }
 
     /* -- Root Variables ------------------------------------------------------ */
     :root {
-      --glass-bg: rgba(255, 255, 255, 0.08);
-      --glass-border: rgba(255, 255, 255, 0.25);
+      --glass-bg: rgba(255,255,255,0.08);
+      --glass-border: rgba(255,255,255,0.22);
+      --text: #eef6ff;
+      --muted: #9fb3c8;
       --accent: #6cf0ff;
       --accent-2: #ff6cf0;
       --accent-3: #f0ff6c;
       --danger: #ff4d6d;
       --ok: #4dff88;
-      --text: #e6f0ff;
-      --muted: #9fb3c8;
-      --shadow: rgba(0, 0, 0, 0.35);
-      --glow: 0 0 12px rgba(108, 240, 255, 0.6), 0 0 24px rgba(108, 240, 255, 0.3);
-      --glow-strong: 0 0 24px rgba(108, 240, 255, 0.8), 0 0 48px rgba(108, 240, 255, 0.4);
+      --shadow: rgba(0,0,0,0.35);
       --panel-radius: 18px;
       --btn-radius: 14px;
       --hud-radius: 12px;
       --blur: blur(12px);
+      --glow: 0 0 12px rgba(108,240,255,0.6), 0 0 24px rgba(108,240,255,0.3);
+      --glow-strong: 0 0 24px rgba(108,240,255,0.8), 0 0 48px rgba(108,240,255,0.4);
+      --panel-gradient: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+      --panel-radial: radial-gradient(800px at 50% 0%, rgba(108,240,255,0.18), transparent 60%);
+      --danger-radial: radial-gradient(800px at 50% 0%, rgba(255,77,109,0.18), transparent 60%);
+      --ok-radial: radial-gradient(800px at 50% 0%, rgba(77,255,136,0.18), transparent 60%);
+      --ring-color: rgba(108,240,255,0.35);
+      --gold: #ffd166;
+      --choco: #8d5a3a;
+      --cream: #fff3d6;
     }
 
     /* -- Background Layers --------------------------------------------------- */
     .bg-layer {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: -1;
+      position: fixed; inset: 0; pointer-events: none; z-index: -1;
       background:
-        radial-gradient(800px at 20% 20%, rgba(108, 240, 255, 0.08), transparent 60%),
-        radial-gradient(800px at 80% 30%, rgba(255, 108, 240, 0.08), transparent 60%),
-        radial-gradient(800px at 40% 80%, rgba(240, 255, 108, 0.08), transparent 60%),
-        linear-gradient(180deg, rgba(10, 14, 24, 0.8), rgba(6, 8, 15, 0.8));
+        radial-gradient(800px at 20% 20%, rgba(108,240,255,0.08), transparent 60%),
+        radial-gradient(800px at 80% 30%, rgba(255,108,240,0.08), transparent 60%),
+        radial-gradient(800px at 40% 80%, rgba(240,255,108,0.08), transparent 60%);
       animation: bgPulse 12s ease-in-out infinite;
     }
-
     @keyframes bgPulse {
-      0%   { filter: saturate(1) brightness(1); }
-      50%  { filter: saturate(1.2) brightness(1.1); }
+      0% { filter: saturate(1) brightness(1); }
+      50% { filter: saturate(1.2) brightness(1.08); }
       100% { filter: saturate(1) brightness(1); }
     }
 
     /* -- Container ----------------------------------------------------------- */
     .container {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      display: grid;
-      grid-template-rows: auto 1fr auto;
-      grid-template-columns: 1fr;
-      align-items: center;
-      justify-items: center;
+      position: relative; width: 100%; height: 100%;
+      display: grid; grid-template-rows: auto 1fr auto; grid-template-columns: 1fr;
+      align-items: center; justify-items: center;
     }
 
     /* -- Panels -------------------------------------------------------------- */
@@ -102,77 +99,38 @@
       border: 1px solid var(--glass-border);
       border-radius: var(--panel-radius);
       box-shadow: 0 10px 30px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.05);
-      backdrop-filter: var(--blur);
-      -webkit-backdrop-filter: var(--blur);
-      padding: 24px;
-      color: var(--text);
+      backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+      padding: 24px; color: var(--text);
     }
-
     .panel-title {
-      font-size: 28px;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      text-shadow: var(--glow);
-      margin-bottom: 16px;
+      font-size: 28px; font-weight: 800; letter-spacing: 0.5px; text-shadow: var(--glow);
       background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-3));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      -webkit-background-clip: text; background-clip: text; color: transparent;
       animation: titleGlow 3s ease-in-out infinite;
     }
-
     @keyframes titleGlow {
-      0%   { text-shadow: 0 0 8px rgba(108,240,255,0.4); }
-      50%  { text-shadow: var(--glow-strong); }
+      0% { text-shadow: 0 0 8px rgba(108,240,255,0.4); }
+      50% { text-shadow: var(--glow-strong); }
       100% { text-shadow: 0 0 8px rgba(108,240,255,0.4); }
     }
 
     /* -- Buttons ------------------------------------------------------------- */
     .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 12px 18px;
-      border-radius: var(--btn-radius);
-      border: 1px solid var(--glass-border);
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 12px 18px; border-radius: var(--btn-radius); border: 1px solid var(--glass-border);
       background:
         linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06)),
         radial-gradient(400px at 50% 0%, rgba(108,240,255,0.25), transparent 60%);
-      color: var(--text);
-      font-weight: 700;
-      letter-spacing: 0.4px;
-      cursor: pointer;
+      color: var(--text); font-weight: 700; letter-spacing: 0.4px; cursor: pointer;
       box-shadow: 0 6px 18px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
       transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
       animation: btnPulse 4s ease-in-out infinite;
     }
-
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 24px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.08);
-      filter: saturate(1.2);
-    }
-
-    .btn:active {
-      transform: translateY(1px) scale(0.99);
-      animation: btnClick 0.3s ease;
-    }
-
-    @keyframes btnPulse {
-      0%   { filter: brightness(1); }
-      50%  { filter: brightness(1.08); }
-      100% { filter: brightness(1); }
-    }
-
-    @keyframes btnClick {
-      0%   { transform: scale(1); }
-      50%  { transform: scale(0.98); }
-      100% { transform: scale(1); }
-    }
-
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.08); filter: saturate(1.2); }
+    .btn:active { transform: translateY(1px) scale(0.99); animation: btnClick 0.3s ease; }
+    @keyframes btnPulse { 0%{filter:brightness(1);} 50%{filter:brightness(1.08);} 100%{filter:brightness(1);} }
+    @keyframes btnClick { 0%{transform:scale(1);} 50%{transform:scale(0.98);} 100%{transform:scale(1);} }
     .btn-primary {
       background:
         linear-gradient(180deg, rgba(108,240,255,0.25), rgba(108,240,255,0.12)),
@@ -180,7 +138,6 @@
       border-color: rgba(108,240,255,0.45);
       box-shadow: 0 6px 18px rgba(108,240,255,0.25), inset 0 0 0 1px rgba(255,255,255,0.08);
     }
-
     .btn-danger {
       background:
         linear-gradient(180deg, rgba(255,77,109,0.25), rgba(255,77,109,0.12)),
@@ -188,7 +145,6 @@
       border-color: rgba(255,77,109,0.45);
       box-shadow: 0 6px 18px rgba(255,77,109,0.25), inset 0 0 0 1px rgba(255,255,255,0.08);
     }
-
     .btn-ok {
       background:
         linear-gradient(180deg, rgba(77,255,136,0.25), rgba(77,255,136,0.12)),
@@ -199,580 +155,318 @@
 
     /* -- HUD ----------------------------------------------------------------- */
     .hud {
-      position: fixed;
-      top: 12px;
-      left: 12px;
-      right: 12px;
-      display: grid;
-      grid-template-columns: 1fr auto auto;
-      gap: 12px;
-      z-index: 10;
+      position: fixed; top: 12px; left: 12px; right: 12px;
+      display: grid; grid-template-columns: 1fr auto auto auto auto auto; gap: 12px; z-index: 10;
     }
-
     .hud-item {
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      border-radius: var(--hud-radius);
-      padding: 10px 14px;
+      background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--hud-radius); padding: 10px 14px;
       box-shadow: 0 6px 18px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      animation: hudGlow 6s ease-in-out infinite;
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      display: flex; align-items: center; gap: 10px; animation: hudGlow 6s ease-in-out infinite;
     }
-
     @keyframes hudGlow {
-      0%   { box-shadow: 0 6px 18px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06); }
-      50%  { box-shadow: var(--glow-strong), inset 0 0 0 1px rgba(255,255,255,0.08); }
+      0% { box-shadow: 0 6px 18px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06); }
+      50% { box-shadow: var(--glow-strong), inset 0 0 0 1px rgba(255,255,255,0.08); }
       100% { box-shadow: 0 6px 18px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06); }
     }
-
-    .hud-label {
-      font-size: 12px;
-      color: var(--muted);
-      letter-spacing: 0.4px;
-    }
-
-    .hud-value {
-      font-size: 16px;
-      font-weight: 800;
-      letter-spacing: 0.6px;
-      color: var(--text);
-      text-shadow: var(--glow);
-    }
+    .hud-label { font-size: 12px; color: var(--muted); letter-spacing: 0.4px; }
+    .hud-value { font-size: 16px; font-weight: 800; letter-spacing: 0.6px; color: var(--text); text-shadow: var(--glow); }
 
     /* -- Canvas -------------------------------------------------------------- */
-    #gameCanvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      display: block;
-      z-index: 1;
-      animation: canvasPulse 10s ease-in-out infinite;
-    }
-
-    @keyframes canvasPulse {
-      0%   { filter: saturate(1) contrast(1); }
-      50%  { filter: saturate(1.1) contrast(1.05); }
-      100% { filter: saturate(1) contrast(1); }
-    }
+    #fxCanvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 1; animation: canvasPulse 10s ease-in-out infinite; pointer-events: none; }
+    @keyframes canvasPulse { 0%{filter:saturate(1) contrast(1);} 50%{filter:saturate(1.1) contrast(1.05);} 100%{filter:saturate(1) contrast(1);} }
 
     /* -- Screens ------------------------------------------------------------- */
-    .screen {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      z-index: 5;
-      pointer-events: none;
-    }
-
-    .screen-content {
-      pointer-events: auto;
-      width: min(900px, 92vw);
-      max-height: 80vh;
-      overflow: auto;
-    }
-
-    .screen-hidden {
-      display: none;
-    }
+    .screen { position: absolute; inset: 0; display: grid; place-items: center; z-index: 5; pointer-events: none; }
+    .screen-content { pointer-events: auto; width: min(1100px, 92vw); max-height: 80vh; overflow: auto; }
+    .screen-hidden { display: none; }
 
     /* -- Loading Screen ------------------------------------------------------ */
     .loading-logo {
-      font-size: 42px;
-      font-weight: 900;
-      letter-spacing: 1px;
-      text-shadow: var(--glow-strong);
-      background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-3));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      font-size: 42px; font-weight: 900; letter-spacing: 1px; text-shadow: var(--glow-strong);
+      background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-3)); -webkit-background-clip: text; background-clip: text; color: transparent;
       animation: logoBreath 4s ease-in-out infinite;
     }
-
-    @keyframes logoBreath {
-      0%   { filter: brightness(1); transform: scale(1); }
-      50%  { filter: brightness(1.15); transform: scale(1.04); }
-      100% { filter: brightness(1); transform: scale(1); }
-    }
-
-    .loading-bar {
-      width: 100%;
-      height: 12px;
-      border-radius: 999px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
-      border: 1px solid var(--glass-border);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 6px 18px var(--shadow);
-      overflow: hidden;
-      margin-top: 16px;
-    }
-
-    .loading-fill {
-      height: 100%;
-      width: 0%;
-      background:
-        linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-3)),
-        radial-gradient(400px at 50% 50%, rgba(255,255,255,0.25), transparent 60%);
-      animation: loadingFill 3s ease-in-out infinite;
-    }
-
-    @keyframes loadingFill {
-      0%   { width: 0%; }
-      50%  { width: 70%; }
-      100% { width: 100%; }
-    }
+    @keyframes logoBreath { 0%{filter:brightness(1); transform:scale(1);} 50%{filter:brightness(1.15); transform:scale(1.04);} 100%{filter:brightness(1); transform:scale(1);} }
+    .loading-bar { width: 100%; height: 12px; border-radius: 999px; background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); border: 1px solid var(--glass-border); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 6px 18px var(--shadow); overflow: hidden; margin-top: 16px; }
+    .loading-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-3)), radial-gradient(400px at 50% 50%, rgba(255,255,255,0.25), transparent 60%); animation: loadingFill 3s ease-in-out infinite; }
+    @keyframes loadingFill { 0%{width:0%;} 50%{width:70%;} 100%{width:100%;} }
 
     /* -- Main Menu ----------------------------------------------------------- */
-    .menu-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
+    .menu-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px; }
     .menu-hero {
+      background: var(--panel-gradient), var(--panel-radial);
+      border: 1px solid var(--glass-border); border-radius: var(--panel-radius); padding: 24px;
+      box-shadow: 0 10px 30px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06); animation: heroPulse 8s ease-in-out infinite;
+    }
+    @keyframes heroPulse { 0%{filter:brightness(1);} 50%{filter:brightness(1.08);} 100%{filter:brightness(1);} }
+    .menu-actions { display: grid; gap: 12px; }
+
+    /* -- Bakery Layout ------------------------------------------------------- */
+    .bakery-layout {
+      display: grid; grid-template-columns: 1fr 0.8fr; gap: 16px;
+    }
+    .bakery-left, .bakery-right {
+      background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--panel-radius); padding: 16px;
+      box-shadow: 0 6px 18px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    }
+
+    /* -- Big Biscuit --------------------------------------------------------- */
+    .big-biscuit {
+      width: 280px; height: 280px; border-radius: 50%;
       background:
-        linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06)),
-        radial-gradient(800px at 50% 0%, rgba(108,240,255,0.18), transparent 60%);
-      border: 1px solid var(--glass-border);
-      border-radius: var(--panel-radius);
-      padding: 24px;
+        radial-gradient(120px at 40% 40%, rgba(255,255,255,0.18), transparent 60%),
+        radial-gradient(120px at 60% 60%, rgba(255,255,255,0.12), transparent 60%),
+        conic-gradient(from 0deg, #a86a44, #8d5a3a, #a86a44);
+      border: 8px solid rgba(255,255,255,0.12);
       box-shadow: 0 10px 30px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06);
-      animation: heroPulse 8s ease-in-out infinite;
+      display: grid; place-items: center; margin: 0 auto;
+      cursor: pointer; user-select: none;
+      animation: biscuitIdle 6s ease-in-out infinite;
+      position: relative;
     }
-
-    @keyframes heroPulse {
-      0%   { filter: brightness(1); }
-      50%  { filter: brightness(1.08); }
-      100% { filter: brightness(1); }
+    @keyframes biscuitIdle { 0%{transform:translateY(0) rotate(0deg);} 50%{transform:translateY(-4px) rotate(1deg);} 100%{transform:translateY(0) rotate(0deg);} }
+    .biscuit-face {
+      width: 70%; height: 70%; border-radius: 50%;
+      background:
+        radial-gradient(60px at 50% 30%, rgba(0,0,0,0.12), transparent 60%),
+        radial-gradient(60px at 50% 70%, rgba(0,0,0,0.12), transparent 60%);
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.08);
     }
-
-    .menu-actions {
-      display: grid;
-      gap: 12px;
+    .biscuit-click {
+      animation: biscuitClick 0.2s ease;
     }
+    @keyframes biscuitClick { 0%{transform:scale(1);} 50%{transform:scale(0.96);} 100%{transform:scale(1);} }
 
-    /* -- Level Selector ------------------------------------------------------ */
-    .level-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 12px;
-    }
-
-    .level-card {
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      border-radius: var(--panel-radius);
-      padding: 16px;
+    /* -- Production Stats ---------------------------------------------------- */
+    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; }
+    .stat-card {
+      background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--hud-radius); padding: 12px;
       box-shadow: 0 6px 18px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      display: grid;
-      gap: 8px;
-      cursor: pointer;
-      transition: transform 0.15s ease, filter 0.15s ease;
-      animation: cardPulse 6s ease-in-out infinite;
     }
+    .stat-title { font-size: 12px; color: var(--muted); }
+    .stat-value { font-size: 16px; font-weight: 800; letter-spacing: 0.6px; color: var(--text); text-shadow: var(--glow); }
 
-    .level-card:hover {
-      transform: translateY(-2px);
-      filter: saturate(1.2);
-    }
-
-    @keyframes cardPulse {
-      0%   { filter: brightness(1); }
-      50%  { filter: brightness(1.06); }
-      100% { filter: brightness(1); }
-    }
-
-    .level-title {
-      font-weight: 800;
-      letter-spacing: 0.6px;
-      color: var(--text);
-      text-shadow: var(--glow);
-    }
-
-    .level-desc {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    /* -- Shop --------------------------------------------------------------- */
-    .shop-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-    }
-
-    .shop-item {
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      border-radius: var(--panel-radius);
-      padding: 16px;
+    /* -- Building List ------------------------------------------------------- */
+    .building-list { display: grid; gap: 10px; }
+    .building {
+      display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;
+      background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--hud-radius); padding: 12px;
       box-shadow: 0 6px 18px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      display: grid;
-      gap: 8px;
-      animation: shopPulse 7s ease-in-out infinite;
     }
+    .building-title { font-weight: 800; letter-spacing: 0.6px; }
+    .building-desc { font-size: 12px; color: var(--muted); }
+    .building-controls { display: inline-flex; gap: 8px; }
 
-    @keyframes shopPulse {
-      0%   { filter: brightness(1); }
-      50%  { filter: brightness(1.05); }
-      100% { filter: brightness(1); }
+    /* -- Research ------------------------------------------------------------ */
+    .research-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .research-card {
+      background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--panel-radius); padding: 16px;
+      box-shadow: 0 6px 18px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06); display: grid; gap: 8px;
     }
+    .research-title { font-weight: 800; letter-spacing: 0.6px; }
+    .research-desc { font-size: 12px; color: var(--muted); }
+    .research-cost { font-size: 14px; font-weight: 700; color: var(--accent); }
 
-    .shop-title {
-      font-weight: 800;
-      letter-spacing: 0.6px;
-      color: var(--text);
-      text-shadow: var(--glow);
+    /* -- Prestige ------------------------------------------------------------ */
+    .prestige-panel {
+      background: var(--panel-gradient), var(--ok-radial);
+      border: 1px solid var(--glass-border); border-radius: var(--panel-radius); padding: 24px;
+      box-shadow: 0 10px 30px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06); animation: prestigePulse 8s ease-in-out infinite;
     }
+    @keyframes prestigePulse { 0%{filter:brightness(1);} 50%{filter:brightness(1.1);} 100%{filter:brightness(1);} }
 
-    .shop-desc {
-      font-size: 12px;
-      color: var(--muted);
+    /* -- Achievements -------------------------------------------------------- */
+    .achievements-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .achievement {
+      background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--panel-radius); padding: 16px;
+      box-shadow: 0 6px 18px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06); display: grid; gap: 8px;
     }
+    .achievement.unlocked { border-color: rgba(77,255,136,0.45); box-shadow: 0 0 12px rgba(77,255,136,0.6), 0 0 24px rgba(77,255,136,0.3); }
+    .achievement-title { font-weight: 800; letter-spacing: 0.6px; }
+    .achievement-desc { font-size: 12px; color: var(--muted); }
 
-    .shop-price {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--accent);
+    /* -- Settings ------------------------------------------------------------ */
+    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .setting-item { display: grid; gap: 8px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--panel-radius); padding: 16px; }
+
+    /* -- Admin Console ------------------------------------------------------- */
+    .admin-console {
+      background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--panel-radius); padding: 16px;
+      box-shadow: 0 10px 30px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06);
     }
+    .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .admin-field { display: grid; gap: 6px; }
+    .admin-input { width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.06); color: var(--text); }
+    .admin-log { height: 160px; overflow: auto; background: rgba(0,0,0,0.35); border-radius: 12px; padding: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 
     /* -- Game Over ----------------------------------------------------------- */
     .gameover-panel {
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06)),
-        radial-gradient(800px at 50% 0%, rgba(255,77,109,0.18), transparent 60%);
-      border: 1px solid var(--glass-border);
-      border-radius: var(--panel-radius);
-      padding: 24px;
-      box-shadow: 0 10px 30px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06);
-      animation: gameOverPulse 8s ease-in-out infinite;
+      background: var(--panel-gradient), var(--danger-radial);
+      border: 1px solid var(--glass-border); border-radius: var(--panel-radius); padding: 24px;
+      box-shadow: 0 10px 30px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06); animation: gameOverPulse 8s ease-in-out infinite;
     }
+    @keyframes gameOverPulse { 0%{filter:brightness(1);} 50%{filter:brightness(1.1);} 100%{filter:brightness(1);} }
+    .gameover-title { font-size: 32px; font-weight: 900; letter-spacing: 1px; color: var(--danger); text-shadow: 0 0 12px rgba(255,77,109,0.6), 0 0 24px rgba(255,77,109,0.3); animation: shakeSoft 2.2s ease-in-out infinite; }
 
-    @keyframes gameOverPulse {
-      0%   { filter: brightness(1); }
-      50%  { filter: brightness(1.1); }
-      100% { filter: brightness(1); }
-    }
-
-    .gameover-title {
-      font-size: 32px;
-      font-weight: 900;
-      letter-spacing: 1px;
-      color: var(--danger);
-      text-shadow: 0 0 12px rgba(255,77,109,0.6), 0 0 24px rgba(255,77,109,0.3);
-      animation: shakeSoft 2.2s ease-in-out infinite;
-    }
+    /* -- Pause Overlay ------------------------------------------------------- */
+    .pause-overlay { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,0.35); z-index: 8; }
+    .pause-content { width: min(600px, 92vw); background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--panel-radius); padding: 24px; box-shadow: 0 10px 30px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06); }
 
     /* -- Screen Shakes ------------------------------------------------------- */
-    .shake-hard {
-      animation: shakeHard 0.6s cubic-bezier(.36,.07,.19,.97) both;
-    }
-
-    .shake-soft {
-      animation: shakeSoft 1.2s ease-in-out both;
-    }
-
-    @keyframes shakeHard {
-      10%, 90% { transform: translate3d(-1px, 0, 0); }
-      20%, 80% { transform: translate3d(2px, 0, 0); }
-      30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-      40%, 60% { transform: translate3d(4px, 0, 0); }
-    }
-
-    @keyframes shakeSoft {
-      0%   { transform: translate3d(0, 0, 0); }
-      25%  { transform: translate3d(1px, -1px, 0); }
-      50%  { transform: translate3d(-1px, 1px, 0); }
-      75%  { transform: translate3d(1px, 1px, 0); }
-      100% { transform: translate3d(0, 0, 0); }
-    }
+    .shake-hard { animation: shakeHard 0.6s cubic-bezier(.36,.07,.19,.97) both; }
+    .shake-soft { animation: shakeSoft 1.2s ease-in-out both; }
+    @keyframes shakeHard { 10%,90%{transform:translate3d(-1px,0,0);} 20%,80%{transform:translate3d(2px,0,0);} 30%,50%,70%{transform:translate3d(-4px,0,0);} 40%,60%{transform:translate3d(4px,0,0);} }
+    @keyframes shakeSoft { 0%{transform:translate3d(0,0,0);} 25%{transform:translate3d(1px,-1px,0);} 50%{transform:translate3d(-1px,1px,0);} 75%{transform:translate3d(1px,1px,0);} 100%{transform:translate3d(0,0,0);} }
 
     /* -- Glow Pulses --------------------------------------------------------- */
-    .glow-pulse {
-      animation: glowPulse 2.4s ease-in-out infinite;
-    }
-
-    @keyframes glowPulse {
-      0%   { box-shadow: var(--glow); }
-      50%  { box-shadow: var(--glow-strong); }
-      100% { box-shadow: var(--glow); }
-    }
+    .glow-pulse { animation: glowPulse 2.4s ease-in-out infinite; }
+    @keyframes glowPulse { 0%{box-shadow:var(--glow);} 50%{box-shadow:var(--glow-strong);} 100%{box-shadow:var(--glow);} }
 
     /* -- Tooltip ------------------------------------------------------------- */
-    .tooltip {
-      position: absolute;
-      background: rgba(0,0,0,0.6);
-      color: #fff;
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-size: 12px;
-      pointer-events: none;
-      transform: translate(-50%, -120%);
-      white-space: nowrap;
-      border: 1px solid rgba(255,255,255,0.2);
-      box-shadow: 0 6px 18px var(--shadow);
-      animation: tooltipFade 0.25s ease-out;
-    }
-
-    @keyframes tooltipFade {
-      from { opacity: 0; transform: translate(-50%, -140%); }
-      to   { opacity: 1; transform: translate(-50%, -120%); }
-    }
+    .tooltip { position: absolute; background: rgba(0,0,0,0.6); color: #fff; padding: 6px 10px; border-radius: 8px; font-size: 12px; pointer-events: none; transform: translate(-50%, -120%); white-space: nowrap; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 6px 18px var(--shadow); animation: tooltipFade 0.25s ease-out; }
+    @keyframes tooltipFade { from{opacity:0; transform:translate(-50%,-140%);} to{opacity:1; transform:translate(-50%,-120%);} }
 
     /* -- Progress Ring ------------------------------------------------------- */
-    .ring {
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      border: 6px solid rgba(255,255,255,0.12);
-      border-top-color: var(--accent);
-      animation: spin 1.2s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    .ring { width: 64px; height: 64px; border-radius: 50%; border: 6px solid rgba(255,255,255,0.12); border-top-color: var(--accent); animation: spin 1.2s linear infinite; }
+    @keyframes spin { to{transform:rotate(360deg);} }
 
     /* -- Decorative Lines ---------------------------------------------------- */
-    .divider {
-      height: 1px;
-      background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.2), rgba(255,255,255,0.08));
-      margin: 12px 0;
-    }
+    .divider { height: 1px; background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.2), rgba(255,255,255,0.08)); margin: 12px 0; }
 
     /* -- Badge --------------------------------------------------------------- */
     .badge {
-      display: inline-block;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: 0.6px;
-      color: var(--text);
+      display: inline-block; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; letter-spacing: 0.6px; color: var(--text);
       border: 1px solid var(--glass-border);
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06)),
-        radial-gradient(400px at 50% 50%, rgba(108,240,255,0.18), transparent 60%);
-      box-shadow: 0 6px 18px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06);
-      animation: badgePulse 5s ease-in-out infinite;
+      background: var(--panel-gradient), radial-gradient(400px at 50% 50%, rgba(108,240,255,0.18), transparent 60%);
+      box-shadow: 0 6px 18px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06); animation: badgePulse 5s ease-in-out infinite;
     }
-
-    @keyframes badgePulse {
-      0%   { filter: brightness(1); }
-      50%  { filter: brightness(1.08); }
-      100% { filter: brightness(1); }
-    }
+    @keyframes badgePulse { 0%{filter:brightness(1);} 50%{filter:brightness(1.08);} 100%{filter:brightness(1);} }
 
     /* -- Modal --------------------------------------------------------------- */
-    .modal {
-      position: fixed;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      background: rgba(0,0,0,0.35);
-      z-index: 20;
-      animation: modalFade 0.25s ease-out;
-    }
-
-    .modal-content {
-      width: min(720px, 92vw);
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      border-radius: var(--panel-radius);
-      padding: 24px;
-      box-shadow: 0 10px 30px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      animation: modalPulse 6s ease-in-out infinite;
-    }
-
-    @keyframes modalFade {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
-
-    @keyframes modalPulse {
-      0%   { filter: brightness(1); }
-      50%  { filter: brightness(1.06); }
-      100% { filter: brightness(1); }
-    }
+    .modal { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,0.35); z-index: 20; animation: modalFade 0.25s ease-out; }
+    .modal-content { width: min(720px, 92vw); background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--panel-radius); padding: 24px; box-shadow: 0 10px 30px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); animation: modalPulse 6s ease-in-out infinite; }
+    @keyframes modalFade { from{opacity:0;} to{opacity:1;} }
+    @keyframes modalPulse { 0%{filter:brightness(1);} 50%{filter:brightness(1.06);} 100%{filter:brightness(1);} }
 
     /* -- Floating Action ----------------------------------------------------- */
     .fab {
-      position: fixed;
-      bottom: 16px;
-      right: 16px;
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      background:
-        linear-gradient(180deg, rgba(108,240,255,0.25), rgba(108,240,255,0.12)),
-        radial-gradient(400px at 50% 0%, rgba(108,240,255,0.35), transparent 60%);
-      border: 1px solid rgba(108,240,255,0.45);
-      box-shadow: 0 10px 24px rgba(108,240,255,0.25), inset 0 0 0 1px rgba(255,255,255,0.08);
-      cursor: pointer;
-      z-index: 12;
-      animation: fabPulse 4s ease-in-out infinite;
+      position: fixed; bottom: 16px; right: 16px; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center;
+      background: linear-gradient(180deg, rgba(108,240,255,0.25), rgba(108,240,255,0.12)), radial-gradient(400px at 50% 0%, rgba(108,240,255,0.35), transparent 60%);
+      border: 1px solid rgba(108,240,255,0.45); box-shadow: 0 10px 24px rgba(108,240,255,0.25), inset 0 0 0 1px rgba(255,255,255,0.08);
+      cursor: pointer; z-index: 12; animation: fabPulse 4s ease-in-out infinite;
     }
-
-    @keyframes fabPulse {
-      0%   { transform: translateY(0); }
-      50%  { transform: translateY(-4px); }
-      100% { transform: translateY(0); }
-    }
+    @keyframes fabPulse { 0%{transform:translateY(0);} 50%{transform:translateY(-4px);} 100%{transform:translateY(0);} }
 
     /* -- Notification -------------------------------------------------------- */
-    .toast {
-      position: fixed;
-      bottom: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      border-radius: var(--hud-radius);
-      padding: 10px 14px;
-      box-shadow: 0 6px 18px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      color: var(--text);
-      z-index: 12;
-      animation: toastFade 0.25s ease-out, toastPulse 6s ease-in-out infinite;
-    }
-
-    @keyframes toastFade {
-      from { opacity: 0; transform: translate(-50%, 20px); }
-      to   { opacity: 1; transform: translate(-50%, 0); }
-    }
-
-    @keyframes toastPulse {
-      0%   { filter: brightness(1); }
-      50%  { filter: brightness(1.06); }
-      100% { filter: brightness(1); }
-    }
+    .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--hud-radius); padding: 10px 14px; box-shadow: 0 6px 18px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--text); z-index: 12; animation: toastFade 0.25s ease-out, toastPulse 6s ease-in-out infinite; }
+    @keyframes toastFade { from{opacity:0; transform:translate(-50%, 20px);} to{opacity:1; transform:translate(-50%, 0);} }
+    @keyframes toastPulse { 0%{filter:brightness(1);} 50%{filter:brightness(1.06);} 100%{filter:brightness(1);} }
 
     /* -- Progress Bars ------------------------------------------------------- */
-    .progress {
-      width: 100%;
-      height: 10px;
-      border-radius: 999px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
-      border: 1px solid var(--glass-border);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 6px 18px var(--shadow);
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background:
-        linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-3)),
-        radial-gradient(400px at 50% 50%, rgba(255,255,255,0.25), transparent 60%);
-      animation: progressFill 2.2s ease-in-out infinite;
-    }
-
-    @keyframes progressFill {
-      0%   { width: 10%; }
-      50%  { width: 70%; }
-      100% { width: 90%; }
-    }
+    .progress { width: 100%; height: 10px; border-radius: 999px; background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); border: 1px solid var(--glass-border); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 6px 18px var(--shadow); overflow: hidden; }
+    .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-3)), radial-gradient(400px at 50% 50%, rgba(255,255,255,0.25), transparent 60%); animation: progressFill 2.2s ease-in-out infinite; }
+    @keyframes progressFill { 0%{width:10%;} 50%{width:70%;} 100%{width:90%;} }
 
     /* -- Meter --------------------------------------------------------------- */
-    .meter {
-      display: grid;
-      grid-template-columns: repeat(10, 1fr);
-      gap: 4px;
-    }
-
-    .meter-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
-      border: 1px solid var(--glass-border);
-      box-shadow: 0 6px 18px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06);
-      animation: dotPulse 3s ease-in-out infinite;
-    }
-
-    @keyframes dotPulse {
-      0%   { filter: brightness(1); }
-      50%  { filter: brightness(1.2); }
-      100% { filter: brightness(1); }
-    }
+    .meter { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
+    .meter-dot { width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06)); border: 1px solid var(--glass-border); box-shadow: 0 6px 18px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.06); animation: dotPulse 3s ease-in-out infinite; }
+    @keyframes dotPulse { 0%{filter:brightness(1);} 50%{filter:brightness(1.2);} 100%{filter:brightness(1);} }
 
     /* -- Label --------------------------------------------------------------- */
-    .label {
-      font-size: 12px;
-      color: var(--muted);
-    }
+    .label { font-size: 12px; color: var(--muted); }
 
     /* -- Scrollbars ---------------------------------------------------------- */
-    ::-webkit-scrollbar {
-      width: 10px;
-      height: 10px;
-    }
-    ::-webkit-scrollbar-track {
-      background: rgba(255,255,255,0.06);
-      border-radius: 999px;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: linear-gradient(180deg, rgba(108,240,255,0.35), rgba(108,240,255,0.18));
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.12);
-    }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: rgba(255,255,255,0.06); border-radius: 999px; }
+    ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, rgba(108,240,255,0.35), rgba(108,240,255,0.18)); border-radius: 999px; border: 1px solid rgba(255,255,255,0.12); }
 
     /* -- Credits ------------------------------------------------------------- */
-    .credits {
-      font-size: 12px;
-      color: var(--muted);
-      text-align: center;
-      margin-top: 8px;
+    .credits { font-size: 12px; color: var(--muted); text-align: center; margin-top: 8px; }
+
+    /* -- Telegraph ----------------------------------------------------------- */
+    .telegraph {
+      position: absolute; border: 2px dashed var(--ring-color); border-radius: 50%;
+      animation: telegraphPulse 1.2s ease-in-out infinite;
     }
+    @keyframes telegraphPulse { 0%{opacity:0.4;} 50%{opacity:0.8;} 100%{opacity:0.4;} }
+
+    /* -- Heat Haze ----------------------------------------------------------- */
+    .heat-haze {
+      position: absolute; inset: 0; pointer-events: none; z-index: 2;
+      background: radial-gradient(600px at 50% 50%, rgba(255,255,255,0.03), transparent 60%);
+      mix-blend-mode: screen; animation: hazePulse 8s ease-in-out infinite;
+    }
+    @keyframes hazePulse { 0%{opacity:0.05;} 50%{opacity:0.12;} 100%{opacity:0.05;} }
+
+    /* -- Ribbons ------------------------------------------------------------- */
+    .ribbon {
+      display: inline-block; padding: 6px 12px; border-radius: 10px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.08));
+      border: 1px solid rgba(255,255,255,0.22); box-shadow: 0 6px 18px var(--shadow);
+      font-weight: 800; letter-spacing: 0.6px; color: var(--text);
+      animation: ribbonPulse 6s ease-in-out infinite;
+    }
+    @keyframes ribbonPulse { 0%{filter:brightness(1);} 50%{filter:brightness(1.06);} 100%{filter:brightness(1);} }
+
+    /* -- Golden Biscuit ------------------------------------------------------ */
+    .golden {
+      position: absolute; width: 48px; height: 48px; border-radius: 50%;
+      background:
+        radial-gradient(20px at 50% 50%, rgba(255,255,255,0.35), transparent 60%),
+        conic-gradient(from 0deg, #ffd166, #ffb703, #ffd166);
+      border: 2px solid rgba(255,255,255,0.25);
+      box-shadow: 0 10px 24px rgba(255,209,102,0.35);
+      animation: goldenPulse 1.6s ease-in-out infinite;
+      cursor: pointer;
+    }
+    @keyframes goldenPulse { 0%{transform:scale(1);} 50%{transform:scale(1.12);} 100%{transform:scale(1);} }
 
     /* -- End of 300+ lines CSS ---------------------------------------------- */
   </style>
 </head>
 <body>
-  <!-- Background layer for gradient ambience -->
   <div class="bg-layer"></div>
+  <div class="heat-haze"></div>
 
-  <!-- HUD: score, health, currency -->
+  <!-- HUD -->
   <div class="hud">
     <div class="hud-item">
-      <div class="hud-label">Score</div>
-      <div class="hud-value" id="hudScore">0</div>
+      <div class="hud-label">Biscuits</div>
+      <div class="hud-value" id="hudBiscuits">0</div>
     </div>
     <div class="hud-item">
-      <div class="hud-label">Health</div>
-      <div class="hud-value" id="hudHealth">100</div>
+      <div class="hud-label">B/s</div>
+      <div class="hud-value" id="hudBps">0</div>
     </div>
     <div class="hud-item">
-      <div class="hud-label">Credits</div>
-      <div class="hud-value" id="hudCredits">0</div>
+      <div class="hud-label">Prestige</div>
+      <div class="hud-value" id="hudPrestige">0</div>
+    </div>
+    <div class="hud-item">
+      <div class="hud-label">Golden</div>
+      <div class="hud-value" id="hudGolden">0</div>
+    </div>
+    <div class="hud-item">
+      <div class="hud-label">Seed</div>
+      <div class="hud-value" id="hudSeed">—</div>
+    </div>
+    <div class="hud-item">
+      <div class="hud-label">Admin</div>
+      <div class="hud-value" id="hudAdmin">Locked</div>
     </div>
   </div>
 
-  <!-- Main canvas for gameplay -->
-  <canvas id="gameCanvas"></canvas>
+  <!-- FX Canvas -->
+  <canvas id="fxCanvas"></canvas>
 
   <!-- Screens -->
   <div class="screen" id="screenLoading">
     <div class="screen-content panel">
-      <div class="panel-title loading-logo">Bullet-Hell Clicker</div>
+      <div class="panel-title loading-logo">Quantum Bakery</div>
       <div class="divider"></div>
-      <div class="loading-bar">
-        <div class="loading-fill" id="loadingFill"></div>
-      </div>
-      <div class="credits">Loading assets and initializing systems…</div>
+      <div class="loading-bar"><div class="loading-fill" id="loadingFill"></div></div>
+      <div class="credits">Preheating ovens, tempering chocolate, compiling synths…</div>
     </div>
   </div>
 
@@ -781,40 +475,176 @@
       <div class="panel-title">Main Menu</div>
       <div class="menu-grid">
         <div class="menu-hero">
-          <div class="badge">Glassmorphism UI</div>
+          <div class="badge">Insane Clicker Forge</div>
           <div class="divider"></div>
-          <p class="label">Welcome, Matteo. This is your deploy-ready, juice-heavy bullet-hell clicker. No libraries—just raw JS and CSS.</p>
+          <p class="label">Matteo, this is a brand-new bakery—fresh engine, deeper systems, and an Admin vault.</p>
           <div class="meter">
             <div class="meter-dot"></div><div class="meter-dot"></div><div class="meter-dot"></div><div class="meter-dot"></div><div class="meter-dot"></div>
             <div class="meter-dot"></div><div class="meter-dot"></div><div class="meter-dot"></div><div class="meter-dot"></div><div class="meter-dot"></div>
           </div>
         </div>
         <div class="menu-actions">
-          <button class="btn btn-primary" id="btnPlay">Play</button>
-          <button class="btn" id="btnLevels">Level Selector</button>
-          <button class="btn" id="btnShop">Shop</button>
-          <button class="btn btn-danger" id="btnQuit">Quit</button>
+          <button class="btn btn-primary" id="btnStart">Start Baking</button>
+          <button class="btn" id="btnFactory">Factory</button>
+          <button class="btn" id="btnResearch">Research</button>
+          <button class="btn" id="btnPrestige">Prestige</button>
+          <button class="btn" id="btnAchievements">Achievements</button>
+          <button class="btn" id="btnSettings">Settings</button>
+          <button class="btn btn-danger" id="btnAdmin">Admin Console</button>
         </div>
       </div>
-      <div class="credits">Built for escalation, juice, and badge-worthy artifacts.</div>
+      <div class="credits">No libraries. No shortcuts. Just raw code and sugar rush.</div>
     </div>
   </div>
 
-  <div class="screen screen-hidden" id="screenLevels">
+  <div class="screen screen-hidden" id="screenBakery">
     <div class="screen-content panel">
-      <div class="panel-title">Level Selector</div>
-      <div class="level-grid" id="levelGrid"></div>
-      <div class="divider"></div>
-      <button class="btn" id="btnBackFromLevels">Back</button>
+      <div class="panel-title">Bakery</div>
+      <div class="bakery-layout">
+        <div class="bakery-left">
+          <div class="big-biscuit" id="bigBiscuit">
+            <div class="biscuit-face"></div>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-title">Total Biscuits</div>
+              <div class="stat-value" id="statTotal">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-title">Clicks</div>
+              <div class="stat-value" id="statClicks">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-title">Session Time</div>
+              <div class="stat-value" id="statTime">0s</div>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="label">Golden biscuits may spawn randomly—click them fast for massive boosts.</div>
+        </div>
+        <div class="bakery-right">
+          <div class="panel-title">Buildings</div>
+          <div class="building-list" id="buildingList"></div>
+          <div class="divider"></div>
+          <button class="btn" id="btnBackFromBakery">Back</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="screen screen-hidden" id="screenShop">
+  <div class="screen screen-hidden" id="screenFactory">
     <div class="screen-content panel">
-      <div class="panel-title">Shop</div>
-      <div class="shop-grid" id="shopGrid"></div>
+      <div class="panel-title">Factory</div>
+      <p class="label">Automate production with industrial-grade upgrades and synergy modules.</p>
+      <div class="building-list" id="factoryList"></div>
       <div class="divider"></div>
-      <button class="btn" id="btnBackFromShop">Back</button>
+      <button class="btn" id="btnBackFromFactory">Back</button>
+    </div>
+  </div>
+
+  <div class="screen screen-hidden" id="screenResearch">
+    <div class="screen-content panel">
+      <div class="panel-title">Research</div>
+      <p class="label">Unlock permanent tech: better ovens, quantum yeast, and flavor entanglement.</p>
+      <div class="research-grid" id="researchGrid"></div>
+      <div class="divider"></div>
+      <button class="btn" id="btnBackFromResearch">Back</button>
+    </div>
+  </div>
+
+  <div class="screen screen-hidden" id="screenPrestige">
+    <div class="screen-content prestige-panel">
+      <div class="panel-title">Prestige</div>
+      <p class="label">Ascend to earn Prestige Crumbs—permanent multipliers and special mechanics.</p>
+      <div class="divider"></div>
+      <div class="menu-actions">
+        <button class="btn btn-primary" id="btnAscend">Ascend</button>
+        <button class="btn" id="btnBackFromPrestige">Back</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen screen-hidden" id="screenAchievements">
+    <div class="screen-content panel">
+      <div class="panel-title">Achievements</div>
+      <div class="achievements-grid" id="achievementsGrid"></div>
+      <div class="divider"></div>
+      <button class="btn" id="btnBackFromAchievements">Back</button>
+    </div>
+  </div>
+
+  <div class="screen screen-hidden" id="screenSettings">
+    <div class="screen-content panel">
+      <div class="panel-title">Settings</div>
+      <div class="settings-grid">
+        <div class="setting-item">
+          <div class="research-title">Audio Volume</div>
+          <input type="range" min="0" max="1" step="0.01" id="volumeSlider"/>
+          <div class="label">Adjust master volume for procedural audio.</div>
+        </div>
+        <div class="setting-item">
+          <div class="research-title">Reduced Motion</div>
+          <button class="btn" id="btnReducedMotion">Toggle</button>
+          <div class="label">Disables certain animations and shakes.</div>
+        </div>
+        <div class="setting-item">
+          <div class="research-title">Colorblind Mode</div>
+          <button class="btn" id="btnColorblind">Toggle</button>
+          <div class="label">Adjusts palettes for better differentiation.</div>
+        </div>
+        <div class="setting-item">
+          <div class="research-title">Performance Mode</div>
+          <button class="btn" id="btnPerf">Toggle</button>
+          <div class="label">Reduces particle cap and effects for FPS stability.</div>
+        </div>
+        <div class="setting-item">
+          <div class="research-title">Seed</div>
+          <div class="seed-panel">
+            <input class="admin-input" id="seedInput" placeholder="Enter seed (alphanumeric)"/>
+            <button class="btn btn-primary" id="btnApplySeed">Apply</button>
+          </div>
+          <div class="label">Seeds control golden spawns, storms, and synergy rolls.</div>
+        </div>
+        <div class="setting-item">
+          <div class="research-title">Debug Draw</div>
+          <button class="btn" id="btnDebugParticles">Particles</button>
+          <button class="btn" id="btnDebugAudio">Audio Scope</button>
+          <button class="btn" id="btnDebugPerf">Perf Stats</button>
+          <div class="label">Visualize internals for validation.</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <button class="btn" id="btnBackFromSettings">Back</button>
+    </div>
+  </div>
+
+  <div class="screen screen-hidden" id="screenAdmin">
+    <div class="screen-content panel">
+      <div class="panel-title">Admin Console</div>
+      <div class="admin-console">
+        <div class="admin-grid">
+          <div class="admin-field">
+            <label class="label">Password</label>
+            <input class="admin-input" id="adminPassword" type="password" placeholder="Enter Admin Password"/>
+            <button class="btn btn-danger" id="btnUnlockAdmin">Unlock</button>
+            <div class="label">Admin password is case-sensitive.</div>
+          </div>
+          <div class="admin-field">
+            <label class="label">Admin Actions</label>
+            <div class="building-controls">
+              <button class="btn" id="btnAdminGive1e6">Give 1e6 Biscuits</button>
+              <button class="btn" id="btnAdminMaxUpgrades">Max Upgrades</button>
+              <button class="btn" id="btnAdminSpawnGolden">Spawn Golden</button>
+              <button class="btn btn-danger" id="btnAdminWipe">Wipe Save</button>
+            </div>
+            <div class="label">Actions require unlocked Admin mode.</div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="admin-log" id="adminLog"></div>
+      </div>
+      <div class="divider"></div>
+      <button class="btn" id="btnBackFromAdmin">Back</button>
     </div>
   </div>
 
@@ -822,7 +652,7 @@
     <div class="screen-content gameover-panel">
       <div class="gameover-title">Game Over</div>
       <div class="divider"></div>
-      <p class="label">You were overwhelmed by the swarm. Your score and credits are tallied below.</p>
+      <p class="label">The ovens cooled. Your biscuits and prestige are tallied below.</p>
       <div class="divider"></div>
       <div class="menu-actions">
         <button class="btn btn-primary" id="btnRetry">Retry</button>
@@ -831,1232 +661,1117 @@
     </div>
   </div>
 
-  <!-- Floating action button for quick mute/unmute -->
-  <div class="fab" id="fabAudio" title="Toggle Audio">
-    🔊
+  <!-- Pause Overlay -->
+  <div class="pause-overlay screen-hidden" id="pauseOverlay">
+    <div class="pause-content panel">
+      <div class="panel-title">Paused</div>
+      <div id="pauseStats" class="label">—</div>
+      <div class="menu-actions">
+        <button class="btn btn-primary" id="btnResume">Resume</button>
+        <button class="btn" id="btnPauseMenu">Menu</button>
+      </div>
+    </div>
   </div>
 
-  <!-- Toast notification container -->
+  <!-- Toast -->
   <div class="toast screen-hidden" id="toast"></div>
 
   <script>
     "use strict";
-
     /* =========================================================================
-       GLOBALS & UTILITY HELPERS
-       ========================================================================= */
+       Quantum Bakery — Insane Clicker Forge
+       =========================================================================
+       This script implements a complete clicker game with:
+       - State machine for screens and flow.
+       - Production systems: buildings, factory modules, research tech, prestige.
+       - Particle system for click juice and events.
+       - Procedural audio via Web Audio API.
+       - Admin mode gated by password "Admin123123".
+       - Save system with versioning and migration.
+       - Debug overlays and performance stats.
+       - Verbose comments for every function and variable.
 
-    /** @type {HTMLCanvasElement} - Main game canvas element */
-    const canvas = document.getElementById("gameCanvas");
-    /** @type {CanvasRenderingContext2D} - 2D rendering context for the canvas */
-    const ctx = canvas.getContext("2d");
+       NOTE: If we hit a character limit, say “Continue” to resume the file.
+    */
 
-    /** @type {HTMLElement} - HUD score element */
-    const hudScoreEl = document.getElementById("hudScore");
-    /** @type {HTMLElement} - HUD health element */
-    const hudHealthEl = document.getElementById("hudHealth");
-    /** @type {HTMLElement} - HUD credits element */
-    const hudCreditsEl = document.getElementById("hudCredits");
+    /* -------------------------------------------------------------------------
+       Global Constants
+       ------------------------------------------------------------------------- */
+    /** Game version string used for save compatibility and migrations. */
+    const GAME_VERSION = "1.0.0-quantum-bakery";
+    /** Admin password required to unlock admin console actions. */
+    const ADMIN_PASSWORD = "Admin123123";
+    /** Default seed used when none is provided. */
+    const DEFAULT_SEED = "BAKERY-SEED-001";
+    /** Target FPS for logic pacing; rendering is requestAnimationFrame-driven. */
+    const TARGET_FPS = 60;
+    /** Milliseconds per tick derived from target FPS. */
+    const MS_PER_TICK = 1000 / TARGET_FPS;
+    /** Maximum particles allowed in normal mode; performance mode reduces this. */
+    const MAX_PARTICLES = 1200;
+    /** Maximum particles in performance mode. */
+    const MAX_PARTICLES_PERF = 600;
+    /** Golden biscuit spawn interval range in milliseconds. */
+    const GOLDEN_MIN_MS = 15000;
+    const GOLDEN_MAX_MS = 45000;
 
-    /** @type {HTMLElement} - Loading screen container */
+    /* -------------------------------------------------------------------------
+       DOM References
+       ------------------------------------------------------------------------- */
+    // HUD elements
+    const hudBiscuitsEl = document.getElementById("hudBiscuits");
+    const hudBpsEl = document.getElementById("hudBps");
+    const hudPrestigeEl = document.getElementById("hudPrestige");
+    const hudGoldenEl = document.getElementById("hudGolden");
+    const hudSeedEl = document.getElementById("hudSeed");
+    const hudAdminEl = document.getElementById("hudAdmin");
+
+    // Screens
     const screenLoading = document.getElementById("screenLoading");
-    /** @type {HTMLElement} - Main menu screen container */
     const screenMenu = document.getElementById("screenMenu");
-    /** @type {HTMLElement} - Level selector screen container */
-    const screenLevels = document.getElementById("screenLevels");
-    /** @type {HTMLElement} - Shop screen container */
-    const screenShop = document.getElementById("screenShop");
-    /** @type {HTMLElement} - Game over screen container */
+    const screenBakery = document.getElementById("screenBakery");
+    const screenFactory = document.getElementById("screenFactory");
+    const screenResearch = document.getElementById("screenResearch");
+    const screenPrestige = document.getElementById("screenPrestige");
+    const screenAchievements = document.getElementById("screenAchievements");
+    const screenSettings = document.getElementById("screenSettings");
+    const screenAdmin = document.getElementById("screenAdmin");
     const screenGameOver = document.getElementById("screenGameOver");
+    const pauseOverlay = document.getElementById("pauseOverlay");
 
-    /** @type {HTMLElement} - Loading bar fill element */
-    const loadingFill = document.getElementById("loadingFill");
+    // Menu buttons
+    const btnStart = document.getElementById("btnStart");
+    const btnFactory = document.getElementById("btnFactory");
+    const btnResearch = document.getElementById("btnResearch");
+    const btnPrestige = document.getElementById("btnPrestige");
+    const btnAchievements = document.getElementById("btnAchievements");
+    const btnSettings = document.getElementById("btnSettings");
+    const btnAdmin = document.getElementById("btnAdmin");
 
-    /** @type {HTMLElement} - Level grid container */
-    const levelGrid = document.getElementById("levelGrid");
-    /** @type {HTMLElement} - Shop grid container */
-    const shopGrid = document.getElementById("shopGrid");
+    // Bakery
+    const bigBiscuit = document.getElementById("bigBiscuit");
+    const buildingList = document.getElementById("buildingList");
+    const btnBackFromBakery = document.getElementById("btnBackFromBakery");
+    const statTotalEl = document.getElementById("statTotal");
+    const statClicksEl = document.getElementById("statClicks");
+    const statTimeEl = document.getElementById("statTime");
 
-    /** @type {HTMLElement} - Toast notification element */
+    // Factory
+    const factoryList = document.getElementById("factoryList");
+    const btnBackFromFactory = document.getElementById("btnBackFromFactory");
+
+    // Research
+    const researchGrid = document.getElementById("researchGrid");
+    const btnBackFromResearch = document.getElementById("btnBackFromResearch");
+
+    // Prestige
+    const btnAscend = document.getElementById("btnAscend");
+    const btnBackFromPrestige = document.getElementById("btnBackFromPrestige");
+
+    // Achievements
+    const achievementsGrid = document.getElementById("achievementsGrid");
+    const btnBackFromAchievements = document.getElementById("btnBackFromAchievements");
+
+    // Settings
+    const volumeSlider = document.getElementById("volumeSlider");
+    const btnReducedMotion = document.getElementById("btnReducedMotion");
+    const btnColorblind = document.getElementById("btnColorblind");
+    const btnPerf = document.getElementById("btnPerf");
+    const seedInput = document.getElementById("seedInput");
+    const btnApplySeed = document.getElementById("btnApplySeed");
+    const btnDebugParticles = document.getElementById("btnDebugParticles");
+    const btnDebugAudio = document.getElementById("btnDebugAudio");
+    const btnDebugPerf = document.getElementById("btnDebugPerf");
+    const btnBackFromSettings = document.getElementById("btnBackFromSettings");
+
+    // Admin
+    const adminPasswordInput = document.getElementById("adminPassword");
+    const btnUnlockAdmin = document.getElementById("btnUnlockAdmin");
+    const btnAdminGive1e6 = document.getElementById("btnAdminGive1e6");
+    const btnAdminMaxUpgrades = document.getElementById("btnAdminMaxUpgrades");
+    const btnAdminSpawnGolden = document.getElementById("btnAdminSpawnGolden");
+    const btnAdminWipe = document.getElementById("btnAdminWipe");
+    const btnBackFromAdmin = document.getElementById("btnBackFromAdmin");
+    const adminLog = document.getElementById("adminLog");
+
+    // Game Over
+    const btnRetry = document.getElementById("btnRetry");
+    const btnReturnMenu = document.getElementById("btnReturnMenu");
+
+    // Pause
+    const btnResume = document.getElementById("btnResume");
+    const btnPauseMenu = document.getElementById("btnPauseMenu");
+    const pauseStats = document.getElementById("pauseStats");
+
+    // Toast
     const toastEl = document.getElementById("toast");
 
-    /** @type {HTMLElement} - Audio FAB element */
-    const fabAudio = document.getElementById("fabAudio");
+    // FX Canvas
+    const fxCanvas = document.getElementById("fxCanvas");
+    const fxCtx = fxCanvas.getContext("2d");
 
-    /** @type {number} - Canvas width */
-    let W = 0;
-    /** @type {number} - Canvas height */
-    let H = 0;
-
-    /** @type {boolean} - Global audio enabled flag */
-    let AUDIO_ENABLED = true;
-
-    /** @type {number} - Global time accumulator for animations */
-    let globalTime = 0;
-
-    /** @type {number} - RequestAnimationFrame handle */
-    let rafId = 0;
-
-    /** @type {number} - Current level index (0..9) */
-    let currentLevelIndex = 0;
-
-    /** @type {number} - Player score */
-    let score = 0;
-    /** @type {number} - Player health */
-    let health = 100;
-    /** @type {number} - Player credits (currency) */
-    let credits = 0;
-
-    /** @type {boolean} - Mouse pressed flag */
-    let mouseDown = false;
-    /** @type {{x:number,y:number}} - Mouse position */
-    const mouse = { x: 0, y: 0 };
-
-    /** @type {boolean} - Debug draw toggles */
-    const DEBUG = {
-      hitboxes: false,
-      particles: false,
-      enemies: false,
-    };
-
-    /**
-     * Updates canvas size to match window dimensions.
-     * Ensures crisp rendering and correct coordinate system.
-     */
-    function resizeCanvas() {
-      W = canvas.width = window.innerWidth;
-      H = canvas.height = window.innerHeight;
+    /* -------------------------------------------------------------------------
+       Utility Functions
+       ------------------------------------------------------------------------- */
+    /** Clamp a number between min and max. */
+    function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+    /** Linear interpolation between a and b by t. */
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    /** Random float in [min, max). */
+    function randf(min, max) { return Math.random() * (max - min) + min; }
+    /** Random integer in [min, max]. */
+    function randi(min, max) { return Math.floor(randf(min, max + 1)); }
+    /** Returns a seeded pseudo-random generator function. */
+    function makePRNG(seedStr) {
+      // Simple xorshift32 seeded by string hash.
+      let h = 2166136261 >>> 0;
+      for (let i = 0; i < seedStr.length; i++) {
+        h ^= seedStr.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      let x = h || 123456789;
+      return function() {
+        // xorshift32
+        x ^= x << 13; x ^= x >>> 17; x ^= x << 5;
+        // Convert to [0,1)
+        return ((x >>> 0) / 4294967296);
+      };
     }
-
-    window.addEventListener("resize", resizeCanvas);
-    resizeCanvas();
-
-    /**
-     * Shows a toast notification with a message for a short duration.
-     * @param {string} msg - Message to display in the toast.
-     * @param {number} [duration=1500] - Duration in milliseconds.
-     */
-    function showToast(msg, duration = 1500) {
+    /** Formats large numbers with suffixes (K, M, B, T, Qa, Qi...). */
+    function formatNum(n) {
+      const abs = Math.abs(n);
+      const suffixes = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "De"];
+      let idx = 0;
+      while (abs >= 1000 && idx < suffixes.length - 1) { n /= 1000; idx++; }
+      return (n.toFixed(n >= 100 ? 0 : n >= 10 ? 1 : 2)) + suffixes[idx];
+    }
+    /** Shows a toast message with optional danger styling. */
+    function showToast(msg, danger = false) {
       toastEl.textContent = msg;
       toastEl.classList.remove("screen-hidden");
-      setTimeout(() => {
-        toastEl.classList.add("screen-hidden");
-      }, duration);
+      toastEl.style.borderColor = danger ? "rgba(255,77,109,0.45)" : "var(--glass-border)";
+      setTimeout(() => toastEl.classList.add("screen-hidden"), 2000);
+    }
+    /** Appends a line to the admin log. */
+    function adminLogLine(text) {
+      const time = new Date().toLocaleTimeString();
+      adminLog.innerHTML += `<div>[${time}] ${text}</div>`;
+      adminLog.scrollTop = adminLog.scrollHeight;
     }
 
-    /**
-     * Adds or removes a CSS class from the body to trigger screen shake.
-     * @param {boolean} hard - Whether to use hard shake or soft shake.
-     */
-    function triggerShake(hard = false) {
-      const cls = hard ? "shake-hard" : "shake-soft";
-      document.body.classList.add(cls);
-      setTimeout(() => document.body.classList.remove(cls), hard ? 600 : 1200);
-    }
-
-    /* =========================================================================
-       STATE MACHINE
-       ========================================================================= */
-
-    /**
-     * Enum-like object for game states.
-     * LOADING: initial asset setup
-     * MENU: main menu
-     * LEVELS: level selector
-     * SHOP: shop system
-     * GAME: active gameplay loop
-     * GAMEOVER: game over screen
-     */
-    const STATES = {
+    /* -------------------------------------------------------------------------
+       State Machine
+       ------------------------------------------------------------------------- */
+    /** Enumeration of game states. */
+    const State = {
       LOADING: "LOADING",
       MENU: "MENU",
-      LEVELS: "LEVELS",
-      SHOP: "SHOP",
-      GAME: "GAME",
+      BAKERY: "BAKERY",
+      FACTORY: "FACTORY",
+      RESEARCH: "RESEARCH",
+      PRESTIGE: "PRESTIGE",
+      ACHIEVEMENTS: "ACHIEVEMENTS",
+      SETTINGS: "SETTINGS",
+      ADMIN: "ADMIN",
       GAMEOVER: "GAMEOVER",
+      PAUSED: "PAUSED",
     };
+    /** Current state of the game. */
+    let currentState = State.LOADING;
 
-    /** @type {string} - Current game state */
-    let currentState = STATES.LOADING;
-
-    /**
-     * Sets the current game state and updates screen visibility.
-     * @param {string} state - Target state from STATES.
-     */
+    /** Shows only the screen corresponding to the given state. */
     function setState(state) {
       currentState = state;
       // Hide all screens
-      screenLoading.classList.add("screen-hidden");
-      screenMenu.classList.add("screen-hidden");
-      screenLevels.classList.add("screen-hidden");
-      screenShop.classList.add("screen-hidden");
-      screenGameOver.classList.add("screen-hidden");
-
-      // Show relevant screen
+      [screenLoading, screenMenu, screenBakery, screenFactory, screenResearch, screenPrestige, screenAchievements, screenSettings, screenAdmin, screenGameOver].forEach(s => s.classList.add("screen-hidden"));
+      pauseOverlay.classList.add("screen-hidden");
+      // Show target
       switch (state) {
-        case STATES.LOADING:
-          screenLoading.classList.remove("screen-hidden");
-          break;
-        case STATES.MENU:
-          screenMenu.classList.remove("screen-hidden");
-          break;
-        case STATES.LEVELS:
-          screenLevels.classList.remove("screen-hidden");
-          break;
-        case STATES.SHOP:
-          screenShop.classList.remove("screen-hidden");
-          break;
-        case STATES.GAME:
-          // Gameplay uses canvas; no overlay screen
-          break;
-        case STATES.GAMEOVER:
-          screenGameOver.classList.remove("screen-hidden");
-          break;
+        case State.LOADING: screenLoading.classList.remove("screen-hidden"); break;
+        case State.MENU: screenMenu.classList.remove("screen-hidden"); break;
+        case State.BAKERY: screenBakery.classList.remove("screen-hidden"); break;
+        case State.FACTORY: screenFactory.classList.remove("screen-hidden"); break;
+        case State.RESEARCH: screenResearch.classList.remove("screen-hidden"); break;
+        case State.PRESTIGE: screenPrestige.classList.remove("screen-hidden"); break;
+        case State.ACHIEVEMENTS: screenAchievements.classList.remove("screen-hidden"); break;
+        case State.SETTINGS: screenSettings.classList.remove("screen-hidden"); break;
+        case State.ADMIN: screenAdmin.classList.remove("screen-hidden"); break;
+        case State.GAMEOVER: screenGameOver.classList.remove("screen-hidden"); break;
+        case State.PAUSED: pauseOverlay.classList.remove("screen-hidden"); break;
       }
     }
 
-    /* =========================================================================
-       INPUT HANDLERS
-       ========================================================================= */
+    /* -------------------------------------------------------------------------
+       Save System
+       ------------------------------------------------------------------------- */
+    /** Key used in localStorage for the save data. */
+    const SAVE_KEY = "quantum-bakery-save";
+    /** Default save structure. */
+    const defaultSave = {
+      version: GAME_VERSION,
+      seed: DEFAULT_SEED,
+      biscuits: 0,
+      totalBiscuits: 0,
+      clicks: 0,
+      goldenCount: 0,
+      prestige: 0,
+      prestigeCrumbs: 0,
+      buildings: {}, // id -> count
+      factoryUpgrades: {}, // id -> level
+      research: {}, // id -> unlocked
+      achievements: {}, // id -> unlocked
+      settings: {
+        volume: 0.6,
+        reducedMotion: false,
+        colorblind: false,
+        performance: false,
+        debugParticles: false,
+        debugAudio: false,
+        debugPerf: false,
+      },
+      adminUnlocked: false,
+      lastSessionStart: Date.now(),
+    };
+    /** Current save data in memory. */
+    let save = null;
 
-    // Mouse move updates position
-    window.addEventListener("mousemove", (e) => {
-      mouse.x = e.clientX;
-      mouse.y = e.clientY;
-    });
-
-    // Mouse down toggles clicker fire
-    window.addEventListener("mousedown", () => {
-      mouseDown = true;
-      // Play click sound via audio manager
-      AudioManager.playClick();
-    });
-
-    // Mouse up stops clicker fire
-    window.addEventListener("mouseup", () => {
-      mouseDown = false;
-    });
-
-    // Prevent context menu to keep right-click free (optional)
-    window.addEventListener("contextmenu", (e) => e.preventDefault());
-
-    /* =========================================================================
-       WEB AUDIO API — PROCEDURAL AUDIO MANAGER
-       ========================================================================= */
-
-    /**
-     * AudioManager handles procedural sound generation using Web Audio API.
-     * - click: short blip for UI and firing
-     * - explosion: noise burst with decay
-     * - levelUp: synth fanfare with multiple oscillators
-     */
-    const AudioManager = (() => {
-      /** @type {AudioContext|null} - Shared audio context */
-      let ctx = null;
-
-      /**
-       * Initializes the audio context if not already created.
-       * Called lazily on first sound play.
-       */
-      function ensureContext() {
-        if (!ctx) {
-          ctx = new (window.AudioContext || window.webkitAudioContext)();
+    /** Loads save from localStorage, migrates if needed, else default. */
+    function loadSave() {
+      try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (!raw) {
+          save = JSON.parse(JSON.stringify(defaultSave));
+          return;
         }
-      }
-
-      /**
-       * Plays a short click sound using a sine oscillator.
-       * Frequency slightly randomized for variation.
-       */
-      function playClick() {
-        if (!AUDIO_ENABLED) return;
-        ensureContext();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = "sine";
-        osc.frequency.value = 220 + Math.random() * 80;
-        gain.gain.value = 0.15;
-        osc.connect(gain).connect(ctx.destination);
-        osc.start();
-        // Quick decay
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.08);
-        osc.stop(ctx.currentTime + 0.1);
-      }
-
-      /**
-       * Plays an explosion sound using noise + lowpass filter + decay envelope.
-       * Adds a subtle pitch drop for extra juice.
-       */
-      function playExplosion() {
-        if (!AUDIO_ENABLED) return;
-        ensureContext();
-
-        // Noise buffer
-        const bufferSize = 2 * ctx.sampleRate;
-        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const output = noiseBuffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-          output[i] = Math.random() * 2 - 1;
+        const data = JSON.parse(raw);
+        // Migration example: if version mismatch, merge defaults
+        if (!data.version || data.version !== GAME_VERSION) {
+          save = Object.assign({}, defaultSave, data);
+          save.version = GAME_VERSION;
+        } else {
+          save = data;
         }
-
-        const noise = ctx.createBufferSource();
-        noise.buffer = noiseBuffer;
-
-        const filter = ctx.createBiquadFilter();
-        filter.type = "lowpass";
-        filter.frequency.value = 1200 + Math.random() * 800;
-
-        const gain = ctx.createGain();
-        gain.gain.value = 0.25;
-
-        noise.connect(filter).connect(gain).connect(ctx.destination);
-        noise.start();
-
-        // Decay envelope
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.6);
-        noise.stop(ctx.currentTime + 0.65);
-
-        // Pitch drop oscillator for body
-        const osc = ctx.createOscillator();
-        const oscGain = ctx.createGain();
-        osc.type = "sawtooth";
-        osc.frequency.setValueAtTime(220, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.5);
-        oscGain.gain.value = 0.12;
-        osc.connect(oscGain).connect(ctx.destination);
-        osc.start();
-        oscGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.5);
-        osc.stop(ctx.currentTime + 0.52);
+      } catch (e) {
+        console.error("Failed to load save:", e);
+        save = JSON.parse(JSON.stringify(defaultSave));
       }
-
-      /**
-       * Plays a level-up fanfare using layered oscillators and a simple arpeggio.
-       * Adds stereo panning and gentle reverb-like delay.
-       */
-      function playLevelUp() {
-        if (!AUDIO_ENABLED) return;
-        ensureContext();
-
-        const notes = [261.63, 329.63, 392.00, 523.25]; // C major arpeggio
-        const baseTime = ctx.currentTime;
-
-        notes.forEach((freq, i) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          const pan = ctx.createStereoPanner();
-          osc.type = i % 2 === 0 ? "triangle" : "square";
-          osc.frequency.value = freq;
-          gain.gain.value = 0.12;
-          pan.pan.value = (i % 2 === 0) ? -0.4 : 0.4;
-          osc.connect(gain).connect(pan).connect(ctx.destination);
-          const t = baseTime + i * 0.12;
-          osc.start(t);
-          gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
-          osc.stop(t + 0.42);
-        });
-
-        // Sub-osc for warmth
-        const sub = ctx.createOscillator();
-        const subGain = ctx.createGain();
-        sub.type = "sine";
-        sub.frequency.value = 130.81; // C3
-        subGain.gain.value = 0.08;
-        sub.connect(subGain).connect(ctx.destination);
-        sub.start(baseTime);
-        subGain.gain.exponentialRampToValueAtTime(0.0001, baseTime + 0.6);
-        sub.stop(baseTime + 0.62);
+    }
+    /** Persists save to localStorage. */
+    function writeSave() {
+      try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(save));
+      } catch (e) {
+        console.error("Failed to write save:", e);
       }
+    }
+    /** Wipes save and reloads defaults. */
+    function wipeSave() {
+      localStorage.removeItem(SAVE_KEY);
+      loadSave();
+      writeSave();
+    }
 
-      /**
-       * Toggles audio enabled flag and updates FAB icon.
-       */
-      function toggleAudio() {
-        AUDIO_ENABLED = !AUDIO_ENABLED;
-        fabAudio.textContent = AUDIO_ENABLED ? "🔊" : "🔇";
-        showToast(AUDIO_ENABLED ? "Audio enabled" : "Audio muted");
-      }
+    /* -------------------------------------------------------------------------
+       Audio Manager (Procedural Web Audio API)
+       ------------------------------------------------------------------------- */
+    /** Audio context used for all procedural sounds. */
+    let audioCtx = null;
+    /** Master gain node controlling overall volume. */
+    let masterGain = null;
+    /** Analyser node for debug audio scope. */
+    let analyser = null;
 
-      return {
-        playClick,
-        playExplosion,
-        playLevelUp,
-        toggleAudio,
-      };
-    })();
+    /** Initializes audio context and nodes. */
+    function initAudio() {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = save.settings.volume;
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 2048;
+      masterGain.connect(analyser);
+      analyser.connect(audioCtx.destination);
+    }
+    /** Sets master volume. */
+    function setVolume(v) {
+      if (!masterGain) return;
+      masterGain.gain.value = clamp(v, 0, 1);
+    }
+    /** Plays a short click blip. */
+    function playClick() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "square";
+      osc.frequency.value = 220 + Math.random() * 80;
+      gain.gain.setValueAtTime(0.0, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.12);
+      osc.connect(gain).connect(masterGain);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.15);
+    }
+    /** Plays a purchase tone. */
+    function playPurchase() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(660, audioCtx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.0, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.4);
+      osc.connect(gain).connect(masterGain);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.45);
+    }
+    /** Plays an error buzz. */
+    function playError() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.0, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.4);
+      osc.connect(gain).connect(masterGain);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.45);
+    }
+    /** Plays a prestige fanfare. */
+    function playPrestige() {
+      if (!audioCtx) return;
+      const osc1 = audioCtx.createOscillator();
+      const osc2 = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc1.type = "sine"; osc2.type = "sine";
+      osc1.frequency.setValueAtTime(330, audioCtx.currentTime);
+      osc2.frequency.setValueAtTime(660, audioCtx.currentTime);
+      osc1.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.6);
+      osc2.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime + 0.6);
+      gain.gain.setValueAtTime(0.0, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.8);
+      osc1.connect(gain); osc2.connect(gain); gain.connect(masterGain);
+      osc1.start(); osc2.start();
+      osc1.stop(audioCtx.currentTime + 0.85);
+      osc2.stop(audioCtx.currentTime + 0.85);
+    }
+    /** Plays admin unlock chime. */
+    function playAdminUnlock() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "square";
+      osc.frequency.setValueAtTime(520, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1040, audioCtx.currentTime + 0.25);
+      gain.gain.setValueAtTime(0.0, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
+      osc.connect(gain).connect(masterGain);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.55);
+    }
 
-    fabAudio.addEventListener("click", AudioManager.toggleAudio);
+    /* -------------------------------------------------------------------------
+       Particle System
+       ------------------------------------------------------------------------- */
+    /** Resizes FX canvas to match window. */
+    function resizeCanvas() {
+      fxCanvas.width = window.innerWidth;
+      fxCanvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resizeCanvas);
 
-    /* =========================================================================
-       PARTICLE SYSTEM — HEAVY-DUTY JUICE ENGINE
-       ========================================================================= */
-
-    /**
-     * Represents a single particle with physics and color cycling.
-     */
+    /** Particle class representing a single visual effect element. */
     class Particle {
       /**
-       * @param {number} x - Initial x position
-       * @param {number} y - Initial y position
-       * @param {number} vx - Initial x velocity
-       * @param {number} vy - Initial y velocity
-       * @param {number} life - Lifetime in frames
-       * @param {string} color - Base color string
-       * @param {number} size - Radius in pixels
+       * @param {number} x - Initial x position.
+       * @param {number} y - Initial y position.
+       * @param {number} vx - Initial x velocity.
+       * @param {number} vy - Initial y velocity.
+       * @param {string} color - Stroke/fill color.
+       * @param {number} life - Lifetime in seconds.
+       * @param {number} size - Base size in pixels.
+       * @param {boolean} glow - Whether to draw glow.
        */
-      constructor(x, y, vx, vy, life, color, size) {
-        /** @type {number} - X position */
-        this.x = x;
-        /** @type {number} - Y position */
-        this.y = y;
-        /** @type {number} - X velocity */
-        this.vx = vx;
-        /** @type {number} - Y velocity */
-        this.vy = vy;
-        /** @type {number} - Remaining life in frames */
-        this.life = life;
-        /** @type {string} - Base color */
+      constructor(x, y, vx, vy, color, life, size, glow = true) {
+        this.x = x; this.y = y;
+        this.vx = vx; this.vy = vy;
         this.color = color;
-        /** @type {number} - Particle size (radius) */
+        this.life = life;
+        this.age = 0;
         this.size = size;
-        /** @type {number} - Friction factor applied per frame */
+        this.glow = glow;
         this.friction = 0.98;
-        /** @type {number} - Gravity applied per frame */
-        this.gravity = 0.02;
-        /** @type {number} - Hue shift for color cycling */
-        this.hue = Math.random() * 360;
+        this.gravity = 0.0;
+        this.spin = randf(-2, 2);
+        this.alpha = 1.0;
       }
-
-      /**
-       * Updates particle physics and life.
-       */
-      update() {
+      /** Updates physics and returns whether still alive. */
+      update(dt) {
+        this.age += dt;
+        if (this.age >= this.life) return false;
         this.vx *= this.friction;
-        this.vy = this.vy * this.friction + this.gravity;
-        this.x += this.vx;
-        this.y += this.vy;
-        this.life--;
-        this.hue += 1.2; // color cycling
+        this.vy = this.vy * this.friction + this.gravity * dt * 60;
+        this.x += this.vx * dt * 60;
+        this.y += this.vy * dt * 60;
+        this.alpha = 1.0 - (this.age / this.life);
+        return true;
       }
-
-      /**
-       * Renders the particle to the canvas.
-       * Uses additive blending for extra juice.
-       * @param {CanvasRenderingContext2D} ctx - Canvas 2D context
-       */
+      /** Renders particle to canvas. */
       draw(ctx) {
         ctx.save();
-        ctx.globalCompositeOperation = "lighter";
-        ctx.fillStyle = `hsla(${this.hue}, 80%, 60%, 0.6)`;
+        ctx.globalAlpha = this.alpha;
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.spin * this.age);
+        if (this.glow) {
+          ctx.shadowColor = this.color;
+          ctx.shadowBlur = 12;
+        } else {
+          ctx.shadowBlur = 0;
+        }
+        ctx.fillStyle = this.color;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.arc(0, 0, this.size, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
       }
-
-      /**
-       * Checks if the particle is still alive.
-       * @returns {boolean} True if life > 0
-       */
-      isAlive() {
-        return this.life > 0;
-      }
     }
 
-    /**
-     * Manages a pool of particles with efficient updates and rendering.
-     * Capable of handling 500+ particles simultaneously.
-     */
+    /** Particle system managing many particles. */
     class ParticleSystem {
       constructor() {
-        /** @type {Particle[]} - Active particles array */
         this.particles = [];
-        /** @type {number} - Maximum particles allowed */
-        this.maxParticles = 1200; // generous cap
+        this.max = save.settings.performance ? MAX_PARTICLES_PERF : MAX_PARTICLES;
+        this.debugDraw = save.settings.debugParticles;
       }
-
-      /**
-       * Spawns a burst of particles at a given position.
-       * @param {number} x - X position
-       * @param {number} y - Y position
-       * @param {number} count - Number of particles to spawn
-       * @param {number} speed - Base speed for velocity
-       * @param {number} size - Base size for particles
-       */
-      burst(x, y, count = 40, speed = 3.5, size = 2.2) {
+      /** Spawns a burst of particles at (x,y). */
+      burst(x, y, count, color) {
         for (let i = 0; i < count; i++) {
-          const angle = Math.random() * Math.PI * 2;
-          const s = speed * (0.6 + Math.random() * 0.8);
-          const vx = Math.cos(angle) * s;
-          const vy = Math.sin(angle) * s;
-          const life = 40 + Math.random() * 40;
-          const color = "#6cf0ff";
-          const p = new Particle(x, y, vx, vy, life, color, size + Math.random() * 1.5);
-          if (this.particles.length < this.maxParticles) {
-            this.particles.push(p);
-          } else {
-            // Replace oldest when at cap
-            this.particles[(Math.random() * this.particles.length) | 0] = p;
-          }
+          if (this.particles.length >= this.max) break;
+          const angle = randf(0, Math.PI * 2);
+          const speed = randf(1, 6);
+          const vx = Math.cos(angle) * speed;
+          const vy = Math.sin(angle) * speed;
+          const life = randf(0.4, 1.2);
+          const size = randf(2, 6);
+          this.particles.push(new Particle(x, y, vx, vy, color, life, size, true));
         }
       }
-
-      /**
-       * Emits a directional stream of particles (used for bullets or trails).
-       * @param {number} x - X position
-       * @param {number} y - Y position
-       * @param {number} dirX - Direction X
-       * @param {number} dirY - Direction Y
-       * @param {number} count - Number of particles
-       */
-      stream(x, y, dirX, dirY, count = 12) {
+      /** Spawns a stream of particles along a direction. */
+      stream(x, y, dirX, dirY, count, color) {
         for (let i = 0; i < count; i++) {
-          const jitterX = (Math.random() - 0.5) * 0.6;
-          const jitterY = (Math.random() - 0.5) * 0.6;
-          const vx = dirX * (2.2 + Math.random() * 1.2) + jitterX;
-          const vy = dirY * (2.2 + Math.random() * 1.2) + jitterY;
-          const life = 24 + Math.random() * 16;
-          const color = "#ff6cf0";
-          const p = new Particle(x, y, vx, vy, life, color, 1.8 + Math.random() * 1.2);
-          if (this.particles.length < this.maxParticles) {
-            this.particles.push(p);
-          } else {
-            this.particles[(Math.random() * this.particles.length) | 0] = p;
-          }
+          if (this.particles.length >= this.max) break;
+          const jitter = randf(-0.6, 0.6);
+          const vx = dirX * randf(2, 5) + jitter;
+          const vy = dirY * randf(2, 5) + jitter;
+          const life = randf(0.3, 0.8);
+          const size = randf(1.5, 4);
+          this.particles.push(new Particle(x, y, vx, vy, color, life, size, false));
         }
       }
-
-      /**
-       * Updates all particles and prunes dead ones.
-       */
-      update() {
-        const arr = this.particles;
-        for (let i = arr.length - 1; i >= 0; i--) {
-          const p = arr[i];
-          p.update();
-          if (!p.isAlive()) {
-            arr.splice(i, 1);
-          }
+      /** Updates all particles. */
+      update(dt) {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          if (!this.particles[i].update(dt)) this.particles.splice(i, 1);
         }
       }
-
-      /**
-       * Draws all particles to the canvas.
-       * @param {CanvasRenderingContext2D} ctx - Canvas 2D context
-       */
+      /** Draws all particles. */
       draw(ctx) {
-        const arr = this.particles;
-        for (let i = 0; i < arr.length; i++) {
-          arr[i].draw(ctx);
+        for (let i = 0; i < this.particles.length; i++) {
+          this.particles[i].draw(ctx);
+        }
+        if (this.debugDraw) {
+          ctx.save();
+          ctx.fillStyle = "rgba(255,255,255,0.6)";
+          ctx.font = "12px monospace";
+          ctx.fillText(`Particles: ${this.particles.length}/${this.max}`, 12, 24);
+          ctx.restore();
         }
       }
+      /** Adjusts max based on performance mode. */
+      setPerformanceMode(on) {
+        this.max = on ? MAX_PARTICLES_PERF : MAX_PARTICLES;
+      }
+      /** Toggles debug draw. */
+      setDebug(on) { this.debugDraw = on; }
     }
 
-    /** @type {ParticleSystem} - Global particle system instance */
+    /** Global particle system instance. */
     const particles = new ParticleSystem();
 
-    /* =========================================================================
-       PLAYER, BULLETS, ENEMIES
-       ========================================================================= */
+    /* -------------------------------------------------------------------------
+       Production Systems
+       ------------------------------------------------------------------------- */
+    /** Building definitions with base cost and production. */
+    const BUILDINGS = [
+      { id: "cursor", name: "Cursor", desc: "Auto-clicks occasionally.", baseCost: 15, baseBps: 0.1 },
+      { id: "oven", name: "Oven", desc: "Bakes biscuits steadily.", baseCost: 100, baseBps: 1.0 },
+      { id: "bakery", name: "Bakery", desc: "A full bakery line.", baseCost: 1100, baseBps: 8.0 },
+      { id: "factory", name: "Factory", desc: "Industrial biscuit factory.", baseCost: 12000, baseBps: 47.0 },
+      { id: "quantum", name: "Quantum Yeast Lab", desc: "Entangles flavors for exponential gains.", baseCost: 130000, baseBps: 260.0 },
+      { id: "portal", name: "Sugar Portal", desc: "Imports sweetness from beyond.", baseCost: 1400000, baseBps: 1400.0 },
+      { id: "planet", name: "Biscuit Planet", desc: "A whole world dedicated to biscuits.", baseCost: 20000000, baseBps: 7800.0 },
+    ];
+    /** Factory upgrades that multiply building outputs. */
+    const FACTORY_UPGRADES = [
+      { id: "steelTrays", name: "Steel Trays", desc: "Ovens +25% output.", target: "oven", mult: 1.25, baseCost: 500 },
+      { id: "conveyorBoost", name: "Conveyor Boost", desc: "Factory +25% output.", target: "factory", mult: 1.25, baseCost: 5000 },
+      { id: "quantumStir", name: "Quantum Stir", desc: "Quantum +25% output.", target: "quantum", mult: 1.25, baseCost: 50000 },
+    ];
+    /** Research tech with permanent effects. */
+    const RESEARCH = [
+      { id: "betterClick", name: "Better Click", desc: "+1 biscuit per click.", baseCost: 1000 },
+      { id: "goldenLuck", name: "Golden Luck", desc: "Golden biscuits spawn more often.", baseCost: 5000 },
+      { id: "prestigeBoost", name: "Prestige Boost", desc: "+10% prestige multiplier.", baseCost: 20000 },
+    ];
+    /** Achievements definitions. */
+    const ACHIEVEMENTS = [
+      { id: "firstClick", name: "First Click", desc: "Click the big biscuit once." },
+      { id: "hundredClicks", name: "Click Storm", desc: "Reach 100 clicks." },
+      { id: "firstGolden", name: "Golden Touch", desc: "Click a golden biscuit." },
+      { id: "firstPrestige", name: "Ascendant", desc: "Perform your first prestige." },
+    ];
 
-    /**
-     * Represents the player entity.
-     * In this clicker, the player is a cursor-centric shooter with auto-fire on click.
-     */
-    class Player {
-      constructor() {
-        /** @type {number} - Player X position */
-        this.x = W / 2;
-        /** @type {number} - Player Y position */
-        this.y = H / 2;
-        /** @type {number} - Player radius */
-        this.r = 12;
-        /** @type {number} - Fire cooldown in frames */
-        this.cooldown = 0;
-        /** @type {number} - Fire rate (lower is faster) */
-        this.fireRate = 8;
-        /** @type {number} - Bullet speed */
-        this.bulletSpeed = 8;
-        /** @type {number} - Bullet damage */
-        this.damage = 10;
-      }
-
-      /**
-       * Updates player position to follow mouse and handles firing.
-       */
-      update() {
-        this.x = mouse.x;
-        this.y = mouse.y;
-
-        if (this.cooldown > 0) this.cooldown--;
-
-        if (mouseDown && this.cooldown <= 0) {
-          this.fire();
-          this.cooldown = this.fireRate;
+    /** Computes cost scaling for building count. */
+    function buildingCost(base, count) {
+      return Math.floor(base * Math.pow(1.15, count));
+    }
+    /** Computes total B/s from buildings and upgrades. */
+    function computeBps() {
+      let bps = 0;
+      const mults = {};
+      // Apply factory upgrades
+      for (const up of FACTORY_UPGRADES) {
+        const level = save.factoryUpgrades[up.id] || 0;
+        if (level > 0) {
+          mults[up.target] = (mults[up.target] || 1) * Math.pow(up.mult, level);
         }
       }
-
-      /**
-       * Fires a bullet towards the nearest enemy or straight up if none.
-       * Spawns particle stream for muzzle flash.
-       */
-      fire() {
-        const target = EnemyManager.getNearest(this.x, this.y);
-        let dirX = 0, dirY = -1;
-        if (target) {
-          const dx = target.x - this.x;
-          const dy = target.y - this.y;
-          const len = Math.hypot(dx, dy) || 1;
-          dirX = dx / len;
-          dirY = dy / len;
-        }
-        const b = new Bullet(this.x, this.y, dirX * this.bulletSpeed, dirY * this.bulletSpeed, this.damage);
-        bullets.push(b);
-        particles.stream(this.x, this.y, dirX, dirY, 16);
+      // Buildings
+      for (const b of BUILDINGS) {
+        const count = save.buildings[b.id] || 0;
+        const m = mults[b.id] || 1;
+        bps += count * b.baseBps * m;
       }
-
-      /**
-       * Draws the player as a glowing circle.
-       * @param {CanvasRenderingContext2D} ctx - Canvas 2D context
-       */
-      draw(ctx) {
-        ctx.save();
-        ctx.globalCompositeOperation = "lighter";
-        ctx.fillStyle = "rgba(108,240,255,0.8)";
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-
-        if (DEBUG.hitboxes) {
-          ctx.strokeStyle = "#0ff";
-          ctx.strokeRect(this.x - this.r, this.y - this.r, this.r * 2, this.r * 2);
-        }
+      // Research: prestigeBoost adds 10% per unlock
+      if (save.research["prestigeBoost"]) {
+        bps *= 1.1;
       }
+      // Prestige crumbs multiplier: 1 + crumbs * 0.01
+      bps *= (1 + save.prestigeCrumbs * 0.01);
+      return bps;
     }
 
-    /**
-     * Represents a bullet fired by the player.
-     */
-    class Bullet {
-      /**
-       * @param {number} x - Initial x position
-       * @param {number} y - Initial y position
-       * @param {number} vx - Velocity x
-       * @param {number} vy - Velocity y
-       * @param {number} damage - Damage dealt to enemies
-       */
-      constructor(x, y, vx, vy, damage) {
-        /** @type {number} - X position */
-        this.x = x;
-        /** @type {number} - Y position */
-        this.y = y;
-        /** @type {number} - X velocity */
-        this.vx = vx;
-        /** @type {number} - Y velocity */
-        this.vy = vy;
-        /** @type {number} - Bullet radius */
-        this.r = 4;
-        /** @type {number} - Damage value */
-        this.damage = damage;
-        /** @type {number} - Lifetime frames */
-        this.life = 120;
-      }
+    /* -------------------------------------------------------------------------
+       Golden Biscuit Spawner
+       ------------------------------------------------------------------------- */
+    /** Next golden spawn timestamp. */
+    let nextGoldenAt = Date.now() + randi(GOLDEN_MIN_MS, GOLDEN_MAX_MS);
+    /** Active golden biscuit element (if any). */
+    let goldenEl = null;
 
-      /**
-       * Updates bullet position and lifetime.
-       */
-      update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        this.life--;
-      }
-
-      /**
-       * Draws the bullet as a glowing dot.
-       * @param {CanvasRenderingContext2D} ctx - Canvas 2D context
-       */
-      draw(ctx) {
-        ctx.save();
-        ctx.globalCompositeOperation = "lighter";
-        ctx.fillStyle = "rgba(255,108,240,0.8)";
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      /**
-       * Checks if bullet is still alive and within bounds.
-       * @returns {boolean} True if alive
-       */
-      isAlive() {
-        return this.life > 0 && this.x >= -20 && this.x <= W + 20 && this.y >= -20 && this.y <= H + 20;
-      }
+    /** Schedules next golden spawn based on seed and research. */
+    function scheduleGolden() {
+      const prng = makePRNG(save.seed + save.goldenCount);
+      const baseMin = GOLDEN_MIN_MS * (save.research["goldenLuck"] ? 0.8 : 1.0);
+      const baseMax = GOLDEN_MAX_MS * (save.research["goldenLuck"] ? 0.8 : 1.0);
+      const ms = Math.floor(lerp(baseMin, baseMax, prng()));
+      nextGoldenAt = Date.now() + ms;
+    }
+    /** Spawns a golden biscuit at a random position. */
+    function spawnGolden() {
+      if (goldenEl) return;
+      goldenEl = document.createElement("div");
+      goldenEl.className = "golden";
+      const x = randi(80, window.innerWidth - 80);
+      const y = randi(120, window.innerHeight - 120);
+      goldenEl.style.left = x + "px";
+      goldenEl.style.top = y + "px";
+      goldenEl.style.position = "fixed";
+      document.body.appendChild(goldenEl);
+      const onClick = (ev) => {
+        ev.stopPropagation();
+        // Reward: burst biscuits and particles
+        const reward = 1000 + Math.floor(computeBps() * 20);
+        save.biscuits += reward;
+        save.totalBiscuits += reward;
+        save.goldenCount += 1;
+        hudGoldenEl.textContent = save.goldenCount;
+        playPurchase();
+        particles.burst(x, y, 80, "rgba(255,209,102,0.9)");
+        // Achievement
+        unlockAchievement("firstGolden");
+        // Cleanup
+        goldenEl.removeEventListener("click", onClick);
+        document.body.removeChild(goldenEl);
+        goldenEl = null;
+        scheduleGolden();
+      };
+      goldenEl.addEventListener("click", onClick);
+      // Auto-despawn after 8s
+      setTimeout(() => {
+        if (goldenEl) {
+          document.body.removeChild(goldenEl);
+          goldenEl = null;
+          scheduleGolden();
+        }
+      }, 8000);
     }
 
-    /** @type {Bullet[]} - Active bullets array */
-    const bullets = [];
-
-    /**
-     * Enemy base class with shared properties.
-     */
-    class Enemy {
-      /**
-       * @param {number} x - Initial x position
-       * @param {number} y - Initial y position
-       * @param {number} hp - Hit points
-       * @param {number} type - Enemy type index
-       */
-      constructor(x, y, hp, type) {
-        /** @type {number} - X position */
-        this.x = x;
-        /** @type {number} - Y position */
-        this.y = y;
-        /** @type {number} - Velocity X */
-        this.vx = 0;
-        /** @type {number} - Velocity Y */
-        this.vy = 0;
-        /** @type {number} - Radius */
-        this.r = 14;
-        /** @type {number} - Hit points */
-        this.hp = hp;
-        /** @type {number} - Enemy type */
-        this.type = type;
-        /** @type {number} - Internal timer for movement patterns */
-        this.t = Math.random() * 1000;
-        /** @type {number} - Teleport cooldown (for teleporters) */
-        this.teleportCooldown = 120 + (Math.random() * 60)|0;
-      }
-
-      /**
-       * Updates enemy movement based on type.
-       * Types:
-       * 0 - Sine wave horizontal
-       * 1 - Circling around a point
-       * 2 - Tracking player
-       * 3 - Teleporting randomly
-       * 4 - Wandering with noise
-       */
-      update() {
-        this.t += 0.02;
-
-        switch (this.type) {
-          case 0: // Sine wave horizontal
-            this.vx = Math.sin(this.t * 2.0) * 2.0;
-            this.vy = 1.2 + Math.sin(this.t) * 0.6;
-            break;
-          case 1: // Circling
-            this.vx = Math.cos(this.t * 1.5) * 2.2;
-            this.vy = Math.sin(this.t * 1.5) * 2.2;
-            break;
-          case 2: // Tracking player
-            const dx = player.x - this.x;
-            const dy = player.y - this.y;
-            const len = Math.hypot(dx, dy) || 1;
-            this.vx = (dx / len) * 1.8;
-            this.vy = (dy / len) * 1.8;
-            break;
-          case 3: // Teleporting
-            this.vx *= 0.95;
-            this.vy *= 0.95;
-            this.teleportCooldown--;
-            if (this.teleportCooldown <= 0) {
-              this.x = Math.random() * W;
-              this.y = Math.random() * H * 0.5;
-              this.teleportCooldown = 120 + (Math.random() * 60)|0;
-              particles.burst(this.x, this.y, 30, 2.5, 2.0);
-            }
-            break;
-          case 4: // Wandering with noise
-            this.vx += (Math.random() - 0.5) * 0.6;
-            this.vy += (Math.random() - 0.5) * 0.6;
-            this.vx = Math.max(Math.min(this.vx, 2.2), -2.2);
-            this.vy = Math.max(Math.min(this.vy, 2.2), -2.2);
-            break;
-        }
-
-        this.x += this.vx;
-        this.y += this.vy;
-
-        // Keep within bounds
-        if (this.x < 0) this.x = 0;
-        if (this.x > W) this.x = W;
-        if (this.y < 0) this.y = 0;
-        if (this.y > H) this.y = H;
-
-        // Collision with player (simple overlap)
-        const dxp = player.x - this.x;
-        const dyp = player.y - this.y;
-        const dist = Math.hypot(dxp, dyp);
-        if (dist < this.r + player.r) {
-          // Damage player and knock enemy slightly
-          health -= 1;
-          this.vx += (Math.random() - 0.5) * 2.0;
-          this.vy += (Math.random() - 0.5) * 2.0;
-          triggerShake(true);
-          particles.burst(player.x, player.y, 20, 2.0, 2.0);
-          if (health <= 0) {
-            Game.endGame();
+    /* -------------------------------------------------------------------------
+       UI Builders
+       ------------------------------------------------------------------------- */
+    /** Renders building list with buy buttons. */
+    function renderBuildings() {
+      buildingList.innerHTML = "";
+      for (const b of BUILDINGS) {
+        const count = save.buildings[b.id] || 0;
+        const cost = buildingCost(b.baseCost, count);
+        const el = document.createElement("div");
+        el.className = "building";
+        el.innerHTML = `
+          <div>
+            <div class="building-title">${b.name} <span class="label">x${count}</span></div>
+            <div class="building-desc">${b.desc} — <span class="label">Cost: ${formatNum(cost)}</span></div>
+          </div>
+          <div class="building-controls">
+            <button class="btn btn-primary">Buy</button>
+          </div>
+        `;
+        const btn = el.querySelector("button");
+        btn.addEventListener("click", () => {
+          if (save.biscuits >= cost) {
+            save.biscuits -= cost;
+            save.buildings[b.id] = count + 1;
+            playPurchase();
+            particles.burst(window.innerWidth - 220, 140, 40, "rgba(108,240,255,0.9)");
+            renderBuildings();
+            updateHud();
+            writeSave();
+          } else {
+            playError();
+            showToast("Not enough biscuits!", true);
           }
-        }
+        });
+        buildingList.appendChild(el);
       }
-
-      /**
-       * Draws the enemy as a glowing circle with HP ring.
-       * @param {CanvasRenderingContext2D} ctx - Canvas 2D context
-       */
-      draw(ctx) {
-        ctx.save();
-        ctx.globalCompositeOperation = "lighter";
-        const base = ["#6cf0ff", "#ff6cf0", "#f0ff6c", "#ff4d6d", "#4dff88"][this.type % 5];
-        ctx.fillStyle = base + "cc";
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-        ctx.fill();
-
-        // HP ring
-        ctx.strokeStyle = base;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.r + 4, 0, (this.hp % 20) / 20 * Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-
-        if (DEBUG.hitboxes) {
-          ctx.strokeStyle = "#f00";
-          ctx.strokeRect(this.x - this.r, this.y - this.r, this.r * 2, this.r * 2);
-        }
+    }
+    /** Renders factory upgrades with level buttons. */
+    function renderFactory() {
+      factoryList.innerHTML = "";
+      for (const up of FACTORY_UPGRADES) {
+        const level = save.factoryUpgrades[up.id] || 0;
+        const cost = Math.floor(up.baseCost * Math.pow(2, level));
+        const el = document.createElement("div");
+        el.className = "building";
+        el.innerHTML = `
+          <div>
+            <div class="building-title">${up.name} <span class="label">Lv.${level}</span></div>
+            <div class="building-desc">${up.desc} — <span class="label">Cost: ${formatNum(cost)}</span></div>
+          </div>
+          <div class="building-controls">
+            <button class="btn btn-primary">Upgrade</button>
+          </div>
+        `;
+        const btn = el.querySelector("button");
+        btn.addEventListener("click", () => {
+          if (save.biscuits >= cost) {
+            save.biscuits -= cost;
+            save.factoryUpgrades[up.id] = level + 1;
+            playPurchase();
+            particles.stream(window.innerWidth - 220, 140, -1, 0, 60, "rgba(108,240,255,0.7)");
+            renderFactory();
+            updateHud();
+            writeSave();
+          } else {
+            playError();
+            showToast("Not enough biscuits!", true);
+          }
+        });
+        factoryList.appendChild(el);
       }
+    }
+    /** Renders research tech with unlock buttons. */
+    function renderResearch() {
+      researchGrid.innerHTML = "";
+      for (const r of RESEARCH) {
+        const unlocked = !!save.research[r.id];
+        const el = document.createElement("div");
+        el.className = "research-card";
+        el.innerHTML = `
+          <div class="research-title">${r.name} ${unlocked ? '<span class="badge">Unlocked</span>' : ''}</div>
+          <div class="research-desc">${r.desc}</div>
+          <div class="research-cost">Cost: ${formatNum(r.baseCost)}</div>
+          <button class="btn ${unlocked ? '' : 'btn-primary'}">${unlocked ? 'Owned' : 'Unlock'}</button>
+        `;
+        const btn = el.querySelector("button");
+        btn.disabled = unlocked;
+        btn.addEventListener("click", () => {
+          if (unlocked) return;
+          if (save.biscuits >= r.baseCost) {
+            save.biscuits -= r.baseCost;
+            save.research[r.id] = true;
+            playPurchase();
+            particles.burst(window.innerWidth / 2, window.innerHeight / 2, 100, "rgba(77,255,136,0.9)");
+            renderResearch();
+            updateHud();
+            writeSave();
+          } else {
+            playError();
+            showToast("Not enough biscuits!", true);
+          }
+        });
+        researchGrid.appendChild(el);
+      }
+    }
+    /** Renders achievements grid. */
+    function renderAchievements() {
+      achievementsGrid.innerHTML = "";
+      for (const a of ACHIEVEMENTS) {
+        const unlocked = !!save.achievements[a.id];
+        const el = document.createElement("div");
+        el.className = "achievement" + (unlocked ? " unlocked" : "");
+        el.innerHTML = `
+          <div class="achievement-title">${a.name}</div>
+          <div class="achievement-desc">${a.desc}</div>
+        `;
+        achievementsGrid.appendChild(el);
+      }
+    }
 
-      /**
-       * Applies damage to the enemy and returns whether it died.
-       * @param {number} dmg - Damage amount
-       * @returns {boolean} True if enemy died
-       */
-      hit(dmg) {
-        this.hp -= dmg;
-        particles.burst(this.x, this.y, 12, 2.0, 1.6);
-        if (this.hp <= 0) {
-          AudioManager.playExplosion();
-          particles.burst(this.x, this.y, 40, 3.0, 2.4);
-          score += 10;
-          credits += 1;
-          return true;
-        }
+    /** Unlocks an achievement by id. */
+    function unlockAchievement(id) {
+      if (!save.achievements[id]) {
+        save.achievements[id] = true;
+        showToast("Achievement unlocked!");
+        writeSave();
+        renderAchievements();
+      }
+    }
+
+    /* -------------------------------------------------------------------------
+       HUD & Stats
+       ------------------------------------------------------------------------- */
+    /** Updates HUD values. */
+    function updateHud() {
+      hudBiscuitsEl.textContent = formatNum(save.biscuits);
+      hudBpsEl.textContent = formatNum(computeBps());
+      hudPrestigeEl.textContent = formatNum(save.prestigeCrumbs);
+      hudGoldenEl.textContent = save.goldenCount;
+      hudSeedEl.textContent = save.seed;
+      hudAdminEl.textContent = save.adminUnlocked ? "Unlocked" : "Locked";
+      statTotalEl.textContent = formatNum(save.totalBiscuits);
+      statClicksEl.textContent = save.clicks;
+    }
+    /** Updates session time stat. */
+    function updateSessionTime() {
+      const secs = Math.floor((Date.now() - save.lastSessionStart) / 1000);
+      statTimeEl.textContent = `${secs}s`;
+    }
+
+    /* -------------------------------------------------------------------------
+       Click Handling
+       ------------------------------------------------------------------------- */
+    /** Handles big biscuit click: adds biscuits, plays effects, tracks stats. */
+    function onBigBiscuitClick(ev) {
+      const rect = bigBiscuit.getBoundingClientRect();
+      const x = ev.clientX;
+      const y = ev.clientY;
+      const baseClick = 1 + (save.research["betterClick"] ? 1 : 0);
+      const gain = baseClick * (1 + save.prestigeCrumbs * 0.01);
+      save.biscuits += gain;
+      save.totalBiscuits += gain;
+      save.clicks += 1;
+      unlockAchievement("firstClick");
+      if (save.clicks >= 100) unlockAchievement("hundredClicks");
+      playClick();
+      bigBiscuit.classList.add("biscuit-click");
+      setTimeout(() => bigBiscuit.classList.remove("biscuit-click"), 120);
+      particles.burst(x, y, 24, "rgba(255,243,214,0.9)");
+      updateHud();
+      writeSave();
+    }
+
+    /* -------------------------------------------------------------------------
+       Prestige
+       ------------------------------------------------------------------------- */
+    /** Computes prestige crumbs from total biscuits. */
+    function computePrestigeCrumbs(total) {
+      return Math.floor(Math.pow(total / 1e6, 0.5));
+    }
+    /** Performs prestige: resets biscuits/buildings, grants crumbs. */
+    function doPrestige() {
+      const crumbs = computePrestigeCrumbs(save.totalBiscuits);
+      if (crumbs <= 0) {
+        playError();
+        showToast("Not enough total biscuits to ascend!", true);
+        return;
+      }
+      save.prestige += 1;
+      save.prestigeCrumbs += crumbs;
+      // Reset production
+      save.biscuits = 0;
+      save.buildings = {};
+      save.factoryUpgrades = {};
+      // Keep research and achievements
+      playPrestige();
+      particles.burst(window.innerWidth / 2, window.innerHeight / 2, 200, "rgba(77,255,136,0.9)");
+      showToast(`Ascended! +${crumbs} crumbs`);
+      updateHud();
+      writeSave();
+    }
+
+    /* -------------------------------------------------------------------------
+       Admin Mode
+       ------------------------------------------------------------------------- */
+    /** Attempts to unlock admin mode with the provided password. */
+    function unlockAdmin(password) {
+      if (password === ADMIN_PASSWORD) {
+        save.adminUnlocked = true;
+        adminLogLine("Admin unlocked.");
+        playAdminUnlock();
+        showToast("Admin unlocked!");
+        hudAdminEl.textContent = "Unlocked";
+        writeSave();
+      } else {
+        adminLogLine("Invalid password attempt.");
+        playError();
+        showToast("Invalid password!", true);
+      }
+    }
+    /** Ensures admin is unlocked before performing action. */
+    function requireAdmin(actionName) {
+      if (!save.adminUnlocked) {
+        adminLogLine(`Denied: ${actionName} (admin locked)`);
+        playError();
+        showToast("Admin locked!", true);
         return false;
       }
+      return true;
+    }
+    /** Admin: give biscuits. */
+    function adminGiveBiscuits(amount) {
+      if (!requireAdmin("Give Biscuits")) return;
+      save.biscuits += amount;
+      save.totalBiscuits += amount;
+      adminLogLine(`Gave ${formatNum(amount)} biscuits.`);
+      particles.burst(window.innerWidth / 2, 120, 120, "rgba(108,240,255,0.9)");
+      playPurchase();
+      updateHud();
+      writeSave();
+    }
+    /** Admin: max upgrades. */
+    function adminMaxUpgrades() {
+      if (!requireAdmin("Max Upgrades")) return;
+      for (const up of FACTORY_UPGRADES) {
+        save.factoryUpgrades[up.id] = 10;
+      }
+      for (const r of RESEARCH) {
+        save.research[r.id] = true;
+      }
+      adminLogLine("Maxed factory upgrades and unlocked all research.");
+      particles.burst(window.innerWidth / 2, window.innerHeight / 2, 200, "rgba(77,255,136,0.9)");
+      playPurchase();
+      updateHud();
+      writeSave();
+    }
+    /** Admin: spawn golden biscuit. */
+    function adminSpawnGolden() {
+      if (!requireAdmin("Spawn Golden")) return;
+      spawnGolden();
+      adminLogLine("Spawned golden biscuit.");
+    }
+    /** Admin: wipe save. */
+    function adminWipe() {
+      if (!requireAdmin("Wipe Save")) return;
+      wipeSave();
+      adminLogLine("Save wiped.");
+      updateHud();
+      renderBuildings();
+      renderFactory();
+      renderResearch();
+      renderAchievements();
+      showToast("Save wiped!");
     }
 
-    /**
-     * Manages enemies: spawning, updating, drawing, and collision with bullets.
-     */
-    const EnemyManager = (() => {
-      /** @type {Enemy[]} - Active enemies array */
-      const enemies = [];
-
-      /**
-       * Spawns a wave of enemies with mixed types.
-       * @param {number} count - Number of enemies to spawn
-       */
-      function spawnWave(count = 12) {
-        for (let i = 0; i < count; i++) {
-          const x = Math.random() * W;
-          const y = Math.random() * H * 0.5;
-          const hp = 20 + (Math.random() * 20)|0;
-          const type = (Math.random() * 5)|0;
-          enemies.push(new Enemy(x, y, hp, type));
-        }
-      }
-
-      /**
-       * Updates all enemies and handles bullet collisions.
-       */
-      function update() {
-        // Spawn logic: keep at least N enemies
-        if (enemies.length < 18) {
-          spawnWave(6);
-        }
-
-        // Update enemies
-        for (let i = enemies.length - 1; i >= 0; i--) {
-          const e = enemies[i];
-          e.update();
-        }
-
-        // Bullet collisions
-        for (let b = bullets.length - 1; b >= 0; b--) {
-          const bullet = bullets[b];
-          for (let i = enemies.length - 1; i >= 0; i--) {
-            const e = enemies[i];
-            const dx = e.x - bullet.x;
-            const dy = e.y - bullet.y;
-            const dist = Math.hypot(dx, dy);
-            if (dist < e.r + bullet.r) {
-              const died = e.hit(bullet.damage);
-              bullets.splice(b, 1);
-              if (died) enemies.splice(i, 1);
-              break;
-            }
-          }
-        }
-
-        // Prune bullets
-        for (let i = bullets.length - 1; i >= 0; i--) {
-          if (!bullets[i].isAlive()) bullets.splice(i, 1);
-        }
-      }
-
-      /**
-       * Draws all enemies.
-       * @param {CanvasRenderingContext2D} ctx - Canvas 2D context
-       */
-      function draw(ctx) {
-        for (let i = 0; i < enemies.length; i++) {
-          enemies[i].draw(ctx);
-        }
-      }
-
-      /**
-       * Clears all enemies (used on game end or level change).
-       */
-      function clear() {
-        enemies.length = 0;
-      }
-
-      /**
-       * Returns the nearest enemy to a given position.
-       * @param {number} x - X position
-       * @param {number} y - Y position
-       * @returns {Enemy|null} Nearest enemy or null
-       */
-      function getNearest(x, y) {
-        let nearest = null;
-        let bestDist = Infinity;
-        for (let i = 0; i < enemies.length; i++) {
-          const e = enemies[i];
-          const d = Math.hypot(e.x - x, e.y - y);
-          if (d < bestDist) {
-            bestDist = d;
-            nearest = e;
-          }
-        }
-        return nearest;
-      }
-
-      return {
-        spawnWave,
-        update,
-        draw,
-        clear,
-        getNearest,
-      };
-    })();
-
-    /** @type {Player} - Player instance */
-    const player = new Player();
-
-    /* =========================================================================
-       GAME LOOP & RENDERING
-       ========================================================================= */
-
-    /**
-     * Clears the canvas with a subtle gradient fade.
-     */
-    function clearCanvas() {
-      ctx.clearRect(0, 0, W, H);
-      // Optional: faint vignette
-      const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W,H)/1.2);
-      grad.addColorStop(0, "rgba(10,14,24,0.0)");
-      grad.addColorStop(1, "rgba(10,14,24,0.25)");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
+    /* -------------------------------------------------------------------------
+       Debug & Settings
+       ------------------------------------------------------------------------- */
+    /** Applies settings to systems. */
+    function applySettings() {
+      setVolume(save.settings.volume);
+      particles.setPerformanceMode(save.settings.performance);
+      particles.setDebug(save.settings.debugParticles);
     }
 
-    /**
-     * Updates HUD elements to reflect current game stats.
-     */
-    function updateHUD() {
-      hudScoreEl.textContent = score;
-      hudHealthEl.textContent = Math.max(0, health);
-      hudCreditsEl.textContent = credits;
+    /* -------------------------------------------------------------------------
+       Game Loop
+       ------------------------------------------------------------------------- */
+    /** Last timestamp for tick pacing. */
+    let lastTime = performance.now();
+
+    /** Main loop: updates production, particles, and draws FX. */
+    function loop(now) {
+      const dtMs = now - lastTime;
+      lastTime = now;
+      const dt = dtMs / 1000;
+
+      // Production: biscuits per second
+      const bps = computeBps();
+      save.biscuits += bps * dt;
+      save.totalBiscuits += bps * dt;
+
+      // Golden spawn check
+      if (Date.now() >= nextGoldenAt) {
+        spawnGolden();
+      }
+
+      // Update HUD periodically
+      updateHud();
+      updateSessionTime();
+
+      // Particles
+      particles.update(dt);
+
+      // Draw FX
+      fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+      particles.draw(fxCtx);
+
+      requestAnimationFrame(loop);
     }
 
-    /**
-     * Main game update function called each frame.
-     * Handles player, enemies, bullets, particles, and HUD.
-     */
-    function update() {
-      globalTime += 1/60;
+    /* -------------------------------------------------------------------------
+       Event Wiring
+       ------------------------------------------------------------------------- */
+    function wireEvents() {
+      // Menu
+      btnStart.addEventListener("click", () => { setState(State.BAKERY); renderBuildings(); });
+      btnFactory.addEventListener("click", () => { setState(State.FACTORY); renderFactory(); });
+      btnResearch.addEventListener("click", () => { setState(State.RESEARCH); renderResearch(); });
+      btnPrestige.addEventListener("click", () => { setState(State.PRESTIGE); });
+      btnAchievements.addEventListener("click", () => { setState(State.ACHIEVEMENTS); renderAchievements(); });
+      btnSettings.addEventListener("click", () => { setState(State.SETTINGS); });
+      btnAdmin.addEventListener("click", () => { setState(State.ADMIN); });
 
-      player.update();
-      EnemyManager.update();
+      // Bakery
+      bigBiscuit.addEventListener("click", onBigBiscuitClick);
+      btnBackFromBakery.addEventListener("click", () => setState(State.MENU));
 
-      particles.update();
+      // Factory
+      btnBackFromFactory.addEventListener("click", () => setState(State.MENU));
 
-      updateHUD();
-    }
+      // Research
+      btnBackFromResearch.addEventListener("click", () => setState(State.MENU));
 
-    /**
-     * Main game draw function called each frame.
-     * Renders background, particles, enemies, bullets, and player.
-     */
-    function draw() {
-      clearCanvas();
+      // Prestige
+      btnAscend.addEventListener("click", () => doPrestige());
+      btnBackFromPrestige.addEventListener("click", () => setState(State.MENU));
 
-      // Background decorative lines
-      ctx.save();
-      ctx.globalAlpha = 0.06;
-      ctx.strokeStyle = "#6cf0ff";
-      ctx.lineWidth = 1;
-      for (let i = 0; i < 12; i++) {
-        ctx.beginPath();
-        ctx.moveTo(0, (i + 1) * (H / 12));
-        ctx.lineTo(W, (i + 1) * (H / 12));
-        ctx.stroke();
-      }
-      ctx.restore();
+      // Achievements
+      btnBackFromAchievements.addEventListener("click", () => setState(State.MENU));
 
-      // Draw particles behind entities
-      particles.draw(ctx);
+      // Settings
+      volumeSlider.value = save.settings.volume;
+      volumeSlider.addEventListener("input", (e) => {
+        save.settings.volume = parseFloat(e.target.value);
+        setVolume(save.settings.volume);
+        writeSave();
+      });
+      btnReducedMotion.addEventListener("click", () => {
+        save.settings.reducedMotion = !save.settings.reducedMotion;
+        showToast(`Reduced Motion: ${save.settings.reducedMotion ? "On" : "Off"}`);
+        writeSave();
+      });
+      btnColorblind.addEventListener("click", () => {
+        save.settings.colorblind = !save.settings.colorblind;
+        showToast(`Colorblind Mode: ${save.settings.colorblind ? "On" : "Off"}`);
+        writeSave();
+      });
+      btnPerf.addEventListener("click", () => {
+        save.settings.performance = !save.settings.performance;
+        particles.setPerformanceMode(save.settings.performance);
+        showToast(`Performance Mode: ${save.settings.performance ? "On" : "Off"}`);
+        writeSave();
+      });
+      btnApplySeed.addEventListener("click", () => {
+        const s = (seedInput.value || "").trim();
+        if (!s) { playError(); showToast("Seed cannot be empty!", true); return; }
+        save.seed = s;
+        hudSeedEl.textContent = save.seed;
+        scheduleGolden();
+        showToast("Seed applied!");
+        writeSave();
+      });
+      btnDebugParticles.addEventListener("click", () => {
+        save.settings.debugParticles = !save.settings.debugParticles;
+        particles.setDebug(save.settings.debugParticles);
+        showToast(`Debug Particles: ${save.settings.debugParticles ? "On" : "Off"}`);
+        writeSave();
+      });
+      btnDebugAudio.addEventListener("click", () => {
+        save.settings.debugAudio = !save.settings.debugAudio;
+        showToast(`Debug Audio: ${save.settings.debugAudio ? "On" : "Off"}`);
+        writeSave();
+      });
+      btnDebugPerf.addEventListener("click", () => {
+        save.settings.debugPerf = !save.settings.debugPerf;
+        showToast(`Debug Perf: ${save.settings.debugPerf ? "On" : "Off"}`);
+        writeSave();
+      });
+      btnBackFromSettings.addEventListener("click", () => setState(State.MENU));
 
-      // Draw bullets
-      for (let i = 0; i < bullets.length; i++) {
-        bullets[i].draw(ctx);
-      }
+      // Admin
+      btnUnlockAdmin.addEventListener("click", () => unlockAdmin(adminPasswordInput.value));
+      btnAdminGive1e6.addEventListener("click", () => adminGiveBiscuits(1e6));
+      btnAdminMaxUpgrades.addEventListener("click", () => adminMaxUpgrades());
+      btnAdminSpawnGolden.addEventListener("click", () => adminSpawnGolden());
+      btnAdminWipe.addEventListener("click", () => adminWipe());
+      btnBackFromAdmin.addEventListener("click", () => setState(State.MENU));
 
-      // Draw enemies
-      EnemyManager.draw(ctx);
+      // Game Over
+      btnRetry.addEventListener("click", () => { setState(State.BAKERY); });
+      btnReturnMenu.addEventListener("click", () => { setState(State.MENU); });
 
-      // Draw player
-      player.draw(ctx);
-    }
+      // Pause
+      btnResume.addEventListener("click", () => setState(State.BAKERY));
+      btnPauseMenu.addEventListener("click", () => setState(State.MENU));
 
-    /**
-     * Game loop using requestAnimationFrame.
-     */
-    function loop() {
-      if (currentState === STATES.GAME) {
-        update();
-        draw();
-      }
-      rafId = requestAnimationFrame(loop);
-    }
-
-    /* =========================================================================
-       GAME CONTROL — START/END/RESET
-       ========================================================================= */
-
-    const Game = (() => {
-      /**
-       * Starts a new game session for the current level.
-       * Resets stats and spawns initial enemies.
-       */
-      function start() {
-        score = 0;
-        health = 100;
-        credits = 0;
-        EnemyManager.clear();
-        bullets.length = 0;
-        particles.burst(W/2, H/2, 80, 3.5, 2.4);
-        AudioManager.playLevelUp();
-        setState(STATES.GAME);
-      }
-
-      /**
-       * Ends the current game session and shows the Game Over screen.
-       */
-      function endGame() {
-        setState(STATES.GAMEOVER);
-        triggerShake(true);
-      }
-
-      /**
-       * Returns to main menu and clears gameplay entities.
-       */
-      function returnToMenu() {
-        setState(STATES.MENU);
-        EnemyManager.clear();
-        bullets.length = 0;
-      }
-
-      return {
-        start,
-        endGame,
-        returnToMenu,
-      };
-    })();
-
-    /* =========================================================================
-       UI WIRING — BUTTONS & LEVEL/SHOP POPULATION
-       ========================================================================= */
-
-    // Menu buttons
-    document.getElementById("btnPlay").addEventListener("click", () => {
-      Game.start();
-    });
-
-    document.getElementById("btnLevels").addEventListener("click", () => {
-      setState(STATES.LEVELS);
-    });
-
-    document.getElementById("btnShop").addEventListener("click", () => {
-      setState(STATES.SHOP);
-    });
-
-    document.getElementById("btnQuit").addEventListener("click", () => {
-      showToast("Quit not implemented—this is a browser game.");
-    });
-
-    // Game Over buttons
-    document.getElementById("btnRetry").addEventListener("click", () => {
-      Game.start();
-    });
-
-    document.getElementById("btnReturnMenu").addEventListener("click", () => {
-      Game.returnToMenu();
-    });
-
-    // Back buttons
-    document.getElementById("btnBackFromLevels").addEventListener("click", () => {
-      setState(STATES.MENU);
-    });
-
-    document.getElementById("btnBackFromShop").addEventListener("click", () => {
-      setState(STATES.MENU);
-    });
-
-    /**
-     * Populates the level selector with 10 dummy levels.
-     * Each level card sets currentLevelIndex and starts the game.
-     */
-    function populateLevels() {
-      levelGrid.innerHTML = "";
-      for (let i = 0; i < 10; i++) {
-        const card = document.createElement("div");
-        card.className = "level-card";
-        const title = document.createElement("div");
-        title.className = "level-title";
-        title.textContent = `Level ${i + 1}`;
-        const desc = document.createElement("div");
-        desc.className = "level-desc";
-        desc.textContent = "Dummy level—tuned for testing enemy patterns and juice.";
-        card.appendChild(title);
-        card.appendChild(desc);
-        card.addEventListener("click", () => {
-          currentLevelIndex = i;
-          showToast(`Starting Level ${i + 1}`);
-          Game.start();
-        });
-        levelGrid.appendChild(card);
-      }
-    }
-
-    /**
-     * Populates the shop with upgrade items.
-     * Each item modifies player stats and costs credits.
-     */
-    function populateShop() {
-      shopGrid.innerHTML = "";
-      const items = [
-        { name: "Fire Rate+", desc: "Shoot faster. Decrease cooldown.", price: 10, apply: () => player.fireRate = Math.max(2, player.fireRate - 1) },
-        { name: "Damage+", desc: "Increase bullet damage.", price: 12, apply: () => player.damage += 2 },
-        { name: "Speed+", desc: "Increase bullet speed.", price: 8, apply: () => player.bulletSpeed += 0.8 },
-        { name: "Health+", desc: "Boost max health by 10.", price: 15, apply: () => health += 10 },
-        { name: "Particle Max+", desc: "Increase particle cap for more juice.", price: 20, apply: () => particles.maxParticles += 100 },
-        { name: "Lucky+", desc: "Increase credit gain chance.", price: 18, apply: () => { /* placeholder for future luck system */ } },
-        { name: "Tracker+", desc: "Improve targeting precision.", price: 14, apply: () => { /* placeholder for aim assist */ } },
-        { name: "Shield+", desc: "Reduce collision damage.", price: 22, apply: () => { /* placeholder for damage reduction */ } },
-        { name: "Fanfare+", desc: "Upgraded level-up audio.", price: 16, apply: () => AudioManager.playLevelUp() },
-      ];
-
-      items.forEach((item) => {
-        const el = document.createElement("div");
-        el.className = "shop-item";
-        const title = document.createElement("div");
-        title.className = "shop-title";
-        title.textContent = item.name;
-        const desc = document.createElement("div");
-        desc.className = "shop-desc";
-        desc.textContent = item.desc;
-        const price = document.createElement("div");
-        price.className = "shop-price";
-        price.textContent = `${item.price} credits`;
-        const btn = document.createElement("button");
-        btn.className = "btn btn-ok";
-        btn.textContent = "Buy";
-        btn.addEventListener("click", () => {
-          if (credits >= item.price) {
-            credits -= item.price;
-            item.apply();
-            showToast(`${item.name} purchased`);
-            AudioManager.playClick();
+      // Keyboard shortcuts
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          if (currentState !== State.PAUSED) {
+            pauseStats.textContent = `Biscuits: ${formatNum(save.biscuits)} | B/s: ${formatNum(computeBps())}`;
+            setState(State.PAUSED);
           } else {
-            showToast("Not enough credits");
+            setState(State.BAKERY);
           }
-        });
-        el.appendChild(title);
-        el.appendChild(desc);
-        el.appendChild(price);
-        el.appendChild(btn);
-        shopGrid.appendChild(el);
+        }
       });
     }
 
-    /* =========================================================================
-       LOADING SEQUENCE
-       ========================================================================= */
-
-    /**
-     * Simulates loading with a timed progress bar, then transitions to menu.
-     */
-    function simulateLoading() {
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += Math.random() * 0.12;
-        loadingFill.style.width = Math.min(100, progress * 100) + "%";
-        if (progress >= 1) {
-          clearInterval(interval);
-          setTimeout(() => {
-            setState(STATES.MENU);
-          }, 400);
-        }
-      }, 120);
-    }
-
-    /* =========================================================================
-       INITIALIZATION
-       ========================================================================= */
-
-    /**
-     * Initializes UI, levels, shop, and starts the main loop.
-     */
+    /* -------------------------------------------------------------------------
+       Initialization
+       ------------------------------------------------------------------------- */
     function init() {
-      setState(STATES.LOADING);
-      populateLevels();
-      populateShop();
-      simulateLoading();
-      loop();
+      resizeCanvas();
+      loadSave();
+      initAudio();
+      applySettings();
+      updateHud();
+      renderAchievements();
+      scheduleGolden();
+      wireEvents();
+      // Simulate loading
+      setTimeout(() => setState(State.MENU), 800);
+      requestAnimationFrame(loop);
     }
 
+    // Start
     init();
-
-    /* =========================================================================
-       EXTENDED COMMENTS & FUTURE HOOKS
-       =========================================================================
-       - Enemy bullets and patterns can be added by extending EnemyManager with
-         projectile arrays and pattern schedulers.
-       - Boss logic: create a Boss class with phases, telegraphs, and bullet
-         patterns (spirals, rings, aimed shots).
-       - Difficulty scaling: tie currentLevelIndex to spawn rates, enemy HP,
-         and movement speed multipliers.
-       - Save system: localStorage for upgrades and high scores.
-       - Achievements: track milestones and show badge toasts.
-       - Audio: add delay/reverb nodes for richer soundscapes.
-       - Mobile: add touch controls and performance tuning.
-       - Performance: batch draw calls, offscreen canvas for particles.
-       - Accessibility: colorblind-friendly palettes and reduced motion toggle.
-       ========================================================================= */
   </script>
 </body>
 </html>
-```
