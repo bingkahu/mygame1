@@ -1,0 +1,10 @@
+#:schema https://moderne-dev.github.io/wrangler-toml-schema/wrangler.toml.schema.json
+name = "the-universal-timeline"
+compatibility_date = "2026-01-26"
+
+# This section is for Pages
+[site]
+bucket = "."
+
+# Optional: If you have a specific folder for build files (like 'dist' or 'out'), 
+# change the bucket line above to: bucket = "./dist"
